@@ -1,1 +1,4 @@
+当前文件全路径
 os.path.realpath(__file__)
+文件目录
+os.path.dirname(myfile)
