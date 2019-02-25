@@ -2,3 +2,8 @@
 os.path.realpath(__file__)
 文件目录
 os.path.dirname(myfile)
+https://blog.csdn.net/m0_38080253/article/details/78841280
+
+
+text= b'\r\n'
+text.decode().strip()
