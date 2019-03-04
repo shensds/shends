@@ -1,21 +1,17 @@
-#https://www.cnblogs.com/huangxm/p/6274645.html
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler, ThrottledDTPHandler
 from pyftpdlib.servers import FTPServer
 import logging
-
-def get_user(userfile):
-    #定义一个用户列表
-    user_list = []
-    with open(userfile) as f:
-        for line in f:
-            if not line.startswith('#') and line:
-                if len(line.split()) == 4: 
-                    user_list.append(line.split())
-                else:
-                    print("user.conf配置错误")
-    return user_list
-
+import socket
+ 
+def get_host_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+    finally:
+        s.close()
+    return ip
 def ftp_server():
     #实例化虚拟用户，这是FTP验证首要条件
     authorizer = DummyAuthorizer()
@@ -32,32 +28,29 @@ def ftp_server():
     # m	创建文件
     # w	写权限
     # M	文件传输模式(通过FTP设置文件权限 )
-    authorizer.add_user('admin', 'admin', '/home/', perm='elradfmw')
+    authorizer.add_user('admin', 'admin', '/home/code/demo/ftp/', perm='elradfmw')
 
     #添加匿名用户 只需要路径
-    #authorizer.add_anonymous('/home/huangxm')
+    #authorizer.add_anonymous('/home/')
 
     #下载上传速度设置
     dtp_handler = ThrottledDTPHandler
     dtp_handler.read_limit = 300*1024 #下载速度 300kb/s
-    dtp_handler.write_limit = settings.max_upload #上传速度  300kb/s
+    dtp_handler.write_limit = 300*1024#上传速度  300kb/s
 
     #初始化ftp句柄
     handler = FTPHandler
     handler.authorizer = authorizer
-
     #日志记录
-    logging.basicConfig(filename=pyftp.log, level=logging.INFO)
-
+    #logging.basicConfig(filename="pyftp.log", level=logging.INFO)
     #欢迎信息
     handler.banner = 'Welcome to python ftp'
-    
-
     #添加被动端口范围
     handler.passive_ports = range(2000,2200)
 
     #监听ip 和 端口
-    server = FTPServer((127.0.0.1, 2121), handler)
+    ip = get_host_ip()
+    server = FTPServer((ip, "2121"), handler)
 
     #最大连接数
     server.max_cons = 20
@@ -66,6 +59,5 @@ def ftp_server():
     #开始服务
     print('开始服务')
     server.serve_forever()
-
 if __name__ == "__main__":
     ftp_server()
