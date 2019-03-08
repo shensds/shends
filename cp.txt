@@ -1,0 +1,9 @@
+在B主机（192.168.0.11）启动nc的端口监听，并将接收到的文件包解压
+nc -l 8888 |tar -zxf -  -C /home/file
+
+然后在A主机上使用tar命令打包
+cd /home/ss(将ss路径下的文件拷贝到192.168.0.11:/home/file)
+tar -zcf -  * | nc 192.168.0.11 8888                     #- 一定不要忽略，表示使用内存，不落地
+tar: Removing leading `/' from member names   #不是错误，是tar删除了绝对路径最开始 / 而进行的提示
+
+等待传输完毕即可。
