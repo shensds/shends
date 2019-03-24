@@ -26,7 +26,7 @@ CodePath = os.path.realpath(os.path.join(MyPath, '..'))
 OneKeyPath = os.path.realpath(os.path.join(CodePath, 'build', 'onekey'))
 sys.path.append(os.path.join(OneKeyPath, 'crsp'))
 
-import crsp
+#import crsp
 
 KWARGS = {}
 
@@ -41,9 +41,9 @@ def _init(argv):
     file_handler.setLevel(logging.DEBUG)
     log.addHandler(file_handler)
 
-    with open(os.path.join(MyPath, 'config.xml'), 'r') as f:
-        cfg = xmltodict.parse(f.read())
-        cfg = cfg["config"]["server"]
+    # with open(os.path.join(MyPath, 'config.xml'), 'r') as f:
+    #     cfg = xmltodict.parse(f.read())
+    cfg = "wocao"
 
     if len(argv) > 0 and argv[0].upper() in ['4G', '5G']:
         KWARGS['version'] = argv[0].upper()
@@ -148,7 +148,7 @@ def parse_paras(args):
         return clean()
 
     elif len(args) == 0 or args[0].upper() in ['4G', '5G']:
-        _init(args)
+        #_init(args)
         return run()
 
     else:
