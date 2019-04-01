@@ -4,6 +4,34 @@
  
 import subprocess
 import os
+
+
+
+
+def get_status_output(cmd):
+    """Exec command Returns the status and output after execution"""
+    pipe = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    out = pipe.communicate(input=b'y')[0]
+    try:
+        out = out.decode('UTF-8')
+    except UnicodeDecodeError:
+        out = out.decode('gbk', errors='ignore')
+
+    try:
+        pipe.kill()
+    except OSError:
+        pass
+    return pipe.returncode, out
+
+
+
+
+
+
+
+
+
+
 # class Shell(object) :
     # def runCmd(self, cmd) :
         # res = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
