@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding:utf-8  -*-
 #mysql版本8.0，脚本请放在mysql根目录下运行
-
+import os
 #my.ini为mysql的配置文件
 my_ini = '''
 [mysqld]
@@ -29,3 +29,8 @@ default-character-set=utf8
 '''
 with open("my.ini1","w+") as fp:
     fp.write(my_ini)
+MyFile = os.path.realpath(__file__)
+MyPath = os.path.dirname(MyFile)
+print(MyFile)
+print(MyPath)
+os.chdir(MyPath+"\\bin")
