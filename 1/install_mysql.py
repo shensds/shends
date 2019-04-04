@@ -2,6 +2,24 @@
 # -*- coding:utf-8  -*-
 #mysql版本8.0，脚本请放在mysql根目录下运行
 import os
+import re
+import subprocess
+
+def get_status_output(cmd):
+    """Exec command Returns the status and output after execution"""
+    pipe = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    out ,err = pipe.communicate(input=b'y')
+    try:
+        out = out.decode('UTF-8')
+    except UnicodeDecodeError:
+        out = out.decode('gbk', errors='ignore')
+
+    try:
+        pipe.kill()
+    except OSError:
+        pass
+    return out, err
+
 #my.ini为mysql的配置文件
 my_ini = '''
 [mysqld]
@@ -27,10 +45,27 @@ default-character-set=utf8
 port=3306
 default-character-set=utf8
 '''
-with open("my.ini1","w+") as fp:
+#写入配置文件
+with open("my.ini","w+") as fp:
     fp.write(my_ini)
+
 MyFile = os.path.realpath(__file__)
 MyPath = os.path.dirname(MyFile)
 print(MyFile)
 print(MyPath)
 os.chdir(MyPath+"\\bin")
+#setx PATH "%PATH%; C:\XXX\" /M
+#初始化，获取临时密码
+
+out,err = get_status_output("mysqld --initialize --user=mysql --console")
+re.search("error",out)
+with open("install.log","wb+") as fp:
+    fp.write(out)
+
+out,err = get_status_output("mysqld -install")
+
+
+
+
+
+
