@@ -65,6 +65,35 @@ with open("install.log","wb+") as fp:
 out,err = get_status_output("mysqld -install")
 
 
+def readCfg(iniFile):
+    cfg = {}
+    config = ConfigParser.ConfigParser()
+    config.readfp(open(iniFile))
+    
+    for section in config.sections():
+        cfg[section] = {}
+        for option in config.options(section):
+            cfg[section][option] = config.get(section, option)
+            # print "cfg[%s][%s] = %s" %(section, option, config.get(section, option))
+    return cfg
+
+
+def setPkgDir(iniFile, pkgDir):
+    if not os.path.isfile(iniFile): return
+    if not os.path.isfile(iniFile): return
+    config = ConfigParser.ConfigParser()
+    config.readfp(open(iniFile))
+    config.set("ftp", "swpdir", pkgDir)
+    print "~~~~~~~~~~~~~~~~~~~"
+    print board
+    if board == "gbts" or board == "gbts_gtmuc" or board == "gbts2":
+        config.set("ftp", "dir", pkgDir)
+        print board
+    print iniFile
+    print "@@@@@@@@@@@"
+    fp = open(iniFile, "w")
+    config.write(fp)
+
 
 
 
