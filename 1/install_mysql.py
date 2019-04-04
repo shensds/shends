@@ -101,3 +101,8 @@ ALTER USER root@localhost IDENTIFIED  BY '123456';
 5.7.22修改密码语句：update user set authentication_string=password('123456') where user='root' and host='localhost';
 5.6.修改密码语句：update user set password=password('123456') where user='root' and host='localhost'; 
 '''
+
+#设置远程登录
+use mysql;
+select host from user where user='root';
+update user set host = '%' where user ='root'
