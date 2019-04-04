@@ -4,6 +4,28 @@
 import os
 import re
 import subprocess
+import configparser
+MyFile = os.path.realpath(__file__)
+MyPath = os.path.dirname(MyFile)
+def readCfg(iniFile):
+    cfg = {}
+    config = configparser.ConfigParser()
+    config.read_file(open(iniFile))
+    
+    for section in config.sections():
+        cfg[section] = {}
+        for option in config.options(section):
+            cfg[section][option] = config.get(section, option)
+            #print ("cfg[%s][%s] = %s" %(section, option, config.get(section, option)))
+    return cfg
+
+def setCfg(iniFile, section, key, value):
+    if not os.path.isfile(iniFile): return
+    config = configparser.ConfigParser()
+    config.read_file(open(iniFile))
+    config.set(section, key, value)
+    fp = open(iniFile, "w")
+    config.write(fp)
 
 def get_status_output(cmd):
     """Exec command Returns the status and output after execution"""
@@ -46,55 +68,36 @@ port=3306
 default-character-set=utf8
 '''
 #写入配置文件
-with open("my.ini","w+") as fp:
-    fp.write(my_ini)
+# with open("my.ini","w+") as fp:
+    # fp.write(my_ini)
+# #修改配置文件
+# setCfg("my.ini","mysqld","basedir",MyPath)
+# setCfg("my.ini","mysqld","datadir",os.path.join(MyPath,"data"))
 
-MyFile = os.path.realpath(__file__)
-MyPath = os.path.dirname(MyFile)
-print(MyFile)
-print(MyPath)
-os.chdir(MyPath+"\\bin")
-#setx PATH "%PATH%; C:\XXX\" /M
-#初始化，获取临时密码
+MyPathBin = os.path.join(MyPath,"bin")
 
+# #初始化，获取临时密码
+os.chdir(MyPathBin)
 out,err = get_status_output("mysqld --initialize --user=mysql --console")
+print(out)
 re.search("error",out)
 with open("install.log","wb+") as fp:
-    fp.write(out)
+    fp.write(out.encode())
 
+#进行服务的添加
 out,err = get_status_output("mysqld -install")
 
+'''
+启动服务
+net start mysql
+mysql -u root -p 
 
-def readCfg(iniFile):
-    cfg = {}
-    config = ConfigParser.ConfigParser()
-    config.readfp(open(iniFile))
-    
-    for section in config.sections():
-        cfg[section] = {}
-        for option in config.options(section):
-            cfg[section][option] = config.get(section, option)
-            # print "cfg[%s][%s] = %s" %(section, option, config.get(section, option))
-    return cfg
-
-
-def setPkgDir(iniFile, pkgDir):
-    if not os.path.isfile(iniFile): return
-    if not os.path.isfile(iniFile): return
-    config = ConfigParser.ConfigParser()
-    config.readfp(open(iniFile))
-    config.set("ftp", "swpdir", pkgDir)
-    print "~~~~~~~~~~~~~~~~~~~"
-    print board
-    if board == "gbts" or board == "gbts_gtmuc" or board == "gbts2":
-        config.set("ftp", "dir", pkgDir)
-        print board
-    print iniFile
-    print "@@@@@@@@@@@"
-    fp = open(iniFile, "w")
-    config.write(fp)
-
-
-
-
-
+修改密码语句：
+ALTER USER root@localhost IDENTIFIED  BY '123456';
+备注：8.0之前版本，忘记密码修改方法
+找到bin目录：mysqld --skip-grant-tables
+重新在开一个cmd窗口
+找到bin目录：mysql就进入登陆状态了
+5.7.22修改密码语句：update user set authentication_string=password('123456') where user='root' and host='localhost';
+5.6.修改密码语句：update user set password=password('123456') where user='root' and host='localhost'; 
+'''
