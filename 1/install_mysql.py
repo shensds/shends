@@ -45,6 +45,8 @@ def get_status_output(cmd):
 #my.ini为mysql的配置文件
 my_ini = '''
 [mysqld]
+# 默认使用“mysql_native_password”插件认证
+default_authentication_plugin=mysql_native_password
 # 设置3306端口
 port=3306
 # 设置mysql的安装目录
@@ -87,12 +89,17 @@ with open("install.log","wb+") as fp:
 #进行服务的添加
 out,err = get_status_output("mysqld -install")
 
-'''
-启动服务
+
+#启动服务
 net start mysql
 mysql -u root -p 
-
+#设置远程登录
+use mysql;
+select host from user where user='root';
+update user set host = '%' where user ='root'
 修改密码语句：
+ 
+ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '新密码';
 ALTER USER root@localhost IDENTIFIED  BY '123456';
 备注：8.0之前版本，忘记密码修改方法
 找到bin目录：mysqld --skip-grant-tables
@@ -100,9 +107,8 @@ ALTER USER root@localhost IDENTIFIED  BY '123456';
 找到bin目录：mysql就进入登陆状态了
 5.7.22修改密码语句：update user set authentication_string=password('123456') where user='root' and host='localhost';
 5.6.修改密码语句：update user set password=password('123456') where user='root' and host='localhost'; 
-'''
 
-#设置远程登录
-use mysql;
-select host from user where user='root';
-update user set host = '%' where user ='root'
+
+
+
+
