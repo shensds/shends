@@ -1,0 +1,166 @@
+#!/usr/bin/env python2.7.6
+# coding=utf-8
+#----------------------------------------------------------------------------
+# Purpose:
+# Copyright Huawei Technologies Co., Ltd. 2010-2018. All rights reserved.
+# Author: fangzheng 00180876
+#----------------------------------------------------------------------------
+
+
+import os
+import sys
+import inspect
+import logging
+import operator
+
+class InsMgrExpt(Exception):
+    pass
+
+class InstanceMgr(object):
+    def __init__(self, comp_folder, base_class, comp = None):
+        """
+        Purpose:
+        Globals:
+        Arguments:
+        Returns:
+        """
+        self._base_class = base_class.split(".")
+        if len(self._base_class) < 2:
+            raise InsMgrExpt("Base class name must at least contains of modulename and classname!")
+        self._all_ins = []
+        self._comp = comp
+        self.ROOT_FOLDER = [comp_folder, "workspace"]
+        sys.path.append(os.path.join(*self.ROOT_FOLDER))
+        sys.path.append(os.path.join(os.path.join(*self.ROOT_FOLDER), "common"))
+        self.ROOT_FOLDER_LEN = len(self.ROOT_FOLDER)
+
+    def _walk_ins(self, ins_path_map, folder):
+        """
+        Purpose:
+        Globals:
+        Arguments:
+        Returns:
+        """
+        ret = False
+        folder_name = folder[-1]
+        # 过滤公共目录
+        if folder_name in ["common", "__pycache__"]:
+            return
+        sub_dir_list = os.listdir(os.path.join(*folder))
+        # time与系统类型冲突
+        ins_name = "timerb" if folder_name == "time" else folder_name
+        if "%s.py" % ins_name in sub_dir_list and "%s.xml" % ins_name in sub_dir_list:
+            ins_path_map.append((folder_name, folder))
+            return
+        else:
+            for sub_dir_name in sub_dir_list:
+                sub_folder = folder[:]
+                sub_folder.append(sub_dir_name)
+                if os.path.isdir(os.path.join(*sub_folder)):
+                    self._walk_ins(ins_path_map, sub_folder)
+                    ret = True
+        if not ret:
+            # 只在底层子目录报错
+            logging.debug("%s entry/config file not exist!" % folder_name)
+        return
+
+    def _get_base_cls(self):
+        """
+        Purpose:
+        Globals:
+        Arguments:
+        Returns:
+        """
+        cls_name = self._base_class[-1]
+        mod_name = self._base_class[-2]
+        mod = __import__(mod_name)
+        return getattr(mod, cls_name)
+
+    def _ld_ins(self, ins_path_map):
+        """
+        Purpose:
+        Globals:
+        Arguments:
+        Returns:
+        """
+        for ins, path in ins_path_map:
+            # time与系统类型冲突
+            ins_name = "timerb" if ins == "time" else ins
+
+            # 实例名称由所有父目录组成
+            ins_name_list = path[self.ROOT_FOLDER_LEN:]
+
+            # 这里为了避免模块重名造成混淆，用workspace开始的路径加载
+            mod_name = "%s.%s" % (".".join(ins_name_list), ins_name)
+            try:
+                mod = __import__(mod_name, globals(), locals(), ins_name_list)
+            except ImportError:
+                logging.warning("Failed to import module %s under the path: " % mod_name + os.sep.join(self.ROOT_FOLDER))
+                continue
+            try:
+                # 判断入口类是否存在
+                cls = getattr(mod, ins_name)
+                if not inspect.isclass(cls):
+                    raise AttributeError
+
+                # 判断入口类是否派生自InsBase
+                base_cls = self._get_base_cls()
+                if not issubclass(cls, base_cls):
+                    logging.debug("%s entry class not inherit from InsBase!" % os.path.join(*ins_name_list))
+                    continue
+
+                # 将入口实例加入实例列表
+                self._all_ins.append((ins_name_list, cls(self._comp)))
+            except AttributeError:
+                logging.debug("%s entry class not exist!" % os.path.join(*ins_name_list))
+
+    def ld_ins(self):
+        """
+        Purpose:
+        Globals:
+        Arguments:
+        Returns:
+        """
+        ins_path_map = []
+        self._walk_ins(ins_path_map, self.ROOT_FOLDER)
+        self._ld_ins(ins_path_map)
+
+    def get_ins(self, instance):
+        """
+        Purpose:
+        Globals:
+        Arguments:
+        Returns:
+        """
+        for ins, ins_obj in self._all_ins:
+            if operator.eq(instance, ins) == True:
+                if ins_obj is None:
+                    break
+                return ins, ins_obj
+        raise InsMgrExpt("invalid instance name")
+
+    def get_allins(self):
+        """
+        Purpose:
+        Globals:
+        Arguments:
+        Returns:
+        """
+        inslist = []
+        for ins, ins_obj in self._all_ins:
+            inslist.append(ins)
+        return inslist
+
+    def fork_ins_func(self, ins_obj, func_name, input_paras):
+        """
+        Purpose:
+        Globals:
+        Arguments:
+        Returns:
+        """
+        if hasattr(ins_obj, func_name):
+            func = getattr(ins_obj, func_name)
+            if (inspect.ismethod(func)):
+                return func(*input_paras)
+        raise InsMgrExpt("invalid function name")
+
