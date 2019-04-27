@@ -2,7 +2,7 @@
 #!/usr/bin/env python3
 # _*_ coding:utf-8 _*_
 import paramiko
-ip,port = '192.168.123.158','22'
+ip,port = '192.168.99.102','22'
 username,password = 'root','123'
 
 # 创建ssh对象

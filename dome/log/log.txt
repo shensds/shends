@@ -1,0 +1,60 @@
+2019-04-27 02:16:17,777  INFO - Start print log
+2019-04-27 02:16:17,778  WARNING - Something maybe fail.
+2019-04-27 02:16:17,781  INFO - Finish
+2019-04-27 02:16:17,781  INFO - Start print log
+2019-04-27 02:16:17,781 - __main__ - INFO - Start print log
+2019-04-27 02:16:17,782  WARNING - Something maybe fail.
+2019-04-27 02:16:17,782 - __main__ - WARNING - Something maybe fail.
+2019-04-27 02:16:17,782  INFO - Finish
+2019-04-27 02:16:17,782 - __main__ - INFO - Finish
+2019-04-27 02:16:17,783  INFO - Start print log
+2019-04-27 02:16:17,783 - __main__ - INFO - Start print log
+2019-04-27 02:16:17,783  INFO - Start print log
+2019-04-27 02:16:17,783  WARNING - Something maybe fail.
+2019-04-27 02:16:17,783 - __main__ - WARNING - Something maybe fail.
+2019-04-27 02:16:17,783  WARNING - Something maybe fail.
+2019-04-27 02:16:17,784  INFO - Finish
+2019-04-27 02:16:17,784 - __main__ - INFO - Finish
+2019-04-27 02:16:17,784  INFO - Finish
+2019-04-27 02:16:17,784  INFO - Start print log
+2019-04-27 02:16:17,784 - __main__ - INFO - Start print log
+2019-04-27 02:16:17,784  INFO - Start print log
+2019-04-27 02:16:17,784 - __main__ - INFO - Start print log
+2019-04-27 02:16:17,785  WARNING - Something maybe fail.
+2019-04-27 02:16:17,785 - __main__ - WARNING - Something maybe fail.
+2019-04-27 02:16:17,785  WARNING - Something maybe fail.
+2019-04-27 02:16:17,785 - __main__ - WARNING - Something maybe fail.
+2019-04-27 02:16:17,786  INFO - Finish
+2019-04-27 02:16:17,786 - __main__ - INFO - Finish
+2019-04-27 02:16:17,786  INFO - Finish
+2019-04-27 02:16:17,786 - __main__ - INFO - Finish
+2019-04-27 02:27:05,466  INFO - Start print log
+2019-04-27 02:27:05,466  WARNING - Something maybe fail.
+2019-04-27 02:27:05,468  INFO - Finish
+2019-04-27 02:27:05,468  INFO - Start print log
+2019-04-27 02:27:05,468 - __main__ - INFO - Start print log
+2019-04-27 02:27:05,469  WARNING - Something maybe fail.
+2019-04-27 02:27:05,469 - __main__ - WARNING - Something maybe fail.
+2019-04-27 02:27:05,470  INFO - Finish
+2019-04-27 02:27:05,470 - __main__ - INFO - Finish
+2019-04-27 02:27:05,472  INFO - Start print log
+2019-04-27 02:27:05,472 - __main__ - INFO - Start print log
+2019-04-27 02:27:05,472  INFO - Start print log
+2019-04-27 02:27:05,473  WARNING - Something maybe fail.
+2019-04-27 02:27:05,473 - __main__ - WARNING - Something maybe fail.
+2019-04-27 02:27:05,473  WARNING - Something maybe fail.
+2019-04-27 02:27:05,474  INFO - Finish
+2019-04-27 02:27:05,474 - __main__ - INFO - Finish
+2019-04-27 02:27:05,474  INFO - Finish
+2019-04-27 02:27:05,485  INFO - Start print log
+2019-04-27 02:27:05,485 - __main__ - INFO - Start print log
+2019-04-27 02:27:05,485  INFO - Start print log
+2019-04-27 02:27:05,485 - __main__ - INFO - Start print log
+2019-04-27 02:27:05,489  WARNING - Something maybe fail.
+2019-04-27 02:27:05,489 - __main__ - WARNING - Something maybe fail.
+2019-04-27 02:27:05,489  WARNING - Something maybe fail.
+2019-04-27 02:27:05,489 - __main__ - WARNING - Something maybe fail.
+2019-04-27 02:27:05,490  INFO - Finish
+2019-04-27 02:27:05,490 - __main__ - INFO - Finish
+2019-04-27 02:27:05,490  INFO - Finish
+2019-04-27 02:27:05,490 - __main__ - INFO - Finish

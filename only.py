@@ -15,6 +15,7 @@ def only(port,timeout,flush = 3):
         try:
             hyf_suo = socket.socket()
             hyf_suo.bind(("127.0.0.1",port))
+            return True
         except OSError:
             print("已有另一个脚本正在执行，等待{}秒".format(timeout))
             time.sleep(flush)
