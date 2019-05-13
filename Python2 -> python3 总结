@@ -1,0 +1,13 @@
+【目前识别到的修改】https://segmentfault.com/a/1190000000328484
+1、print在3.7版本需要加括号，例如：print "xxx"  --> print("xxx")
+2、ConfigParser模块在python3以后就改名成小写configparser
+3、字典没有has_key方法，可以改成 "xxx" in dict.keys()
+4、python3开始不支持setdefaultencoding，因为默认unicode支持中文
+5、python3字符串不支持编解码操作，因为不需要,有编解码操作的部分，后续都可以删除，当前制式报错部分做了整改。需要加异常保护，否则老版本会挂
+6、ConfigParser对section设置值的时候，要求变严格，必须要字符串，不允许数字
+7、对缩进的要求变严格，之前2.7中出现的缩进问题没报错
+8、raise AttributeError, "type:%s 不存在" % type  这样的格式有问题raise AttributeError("type:%s 不存在" % type)
+9、文件操作变严格，以前r方式打开能读写的范围更大，当前文件打开方式可能部分地方需要变化
+10、cmp函数没了，可以用operator模块的eq函数来代替
+11、dict使用的时候不再有soter()方法，
+12、编码格式相关改动
