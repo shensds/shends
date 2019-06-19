@@ -24,7 +24,34 @@ def get_status_output(cmd):
     return pipe.returncode, out
 
 
+def shell_cmd(s_cmd, inmsg=None, shell_mode=True):
+    """
+        Description : @Todo
+        Modify   at : 2018-11-24 09:46:11
+    """
+    print('[shell_cmd]Popen:%s; inmsg:%s; \nWork dir:%s' % (s_cmd, inmsg, os.getcwd()))
+    p = None
+    out, err = '', ''
+    try:
+        # Can not determine the format of the output returned in the child process, directly get the out and err of the bytes type, do not do string operations on out, err.
+        p = subprocess.Popen(s_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        if inmsg:
+            p.stdin.write(inmsg)
 
+        out, err = p.communicate()
+    except:
+        print('There are some exceptions in [shell_cmd]!')
+        print(get_traceback_info())
+        return 1, out, err
+
+    try:
+        out_str = out.decode('utf-8')
+        err_str = err.decode('utf-8')
+    except:
+        out_str = out.decode('gbk','ignore')
+        err_str = err.decode('gbk','ignore')
+
+    return p.returncode, out_str, err_str
 
 
 
