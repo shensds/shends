@@ -1,0 +1,26 @@
+cat /etc/issue查看当前正在运行的 Ubuntu 的版本号。
+
+sudo apt-get upgrade  
+sudo apt-get update  
+sudo apt-get dist-upgrade
+
+
+apt-get install samba samba-common
+smbpasswd -a root
+
+vim /etc/samba/smb.conf
+
+[share]
+comment = share folder
+browseable = yes
+path = /home/linuxidc/linuxidc.com/share
+create mask = 0700
+directory mask = 0700
+valid users = linuxidc
+force user = linuxidc
+force group = linuxidc
+public = yes 
+available = yes 
+writable = yes
+
+service smbd restart
