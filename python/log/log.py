@@ -14,7 +14,10 @@ import logging
 logging.basicConfig(level = logging.INFO,format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("wocao")
 
-
+logging.basicConfig(level=logging.DEBUG,
+            format='%(asctime)s %(filename)s line:%(lineno)d %(levelname)s:%(message)s',
+            datefmt='%H:%M:%S',
+            )
 # FATAL：致命错误
 # CRITICAL：特别糟糕的事情，如内存耗尽、磁盘空间为空，一般很少使用
 # ERROR：发生错误时，如IO操作失败或者连接问题
