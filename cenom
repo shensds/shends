@@ -1,0 +1,532 @@
+#!/usr/bin/env python2.7.6
+# coding=utf-8
+#----------------------------------------------------------------------------
+# Purpose: Switch Platform
+# Copyright Huawei Technologies Co., Ltd. 2010-2018. All rights reserved.
+# Author: z00251588
+# Date：2019/01/23
+#----------------------------------------------------------------------------
+
+import sys
+import os
+import json
+import logging
+import shutil
+import subprocess
+import platform
+import requests
+import argparse
+import time
+import re
+import hashlib
+from multiprocessing import Process, Manager
+
+import xml.etree.ElementTree as ET
+
+logging.basicConfig(level=logging.INFO,
+                format='%(asctime)s line:%(lineno)d %(levelname)s %(message)s',
+                datefmt='%H:%M:%S',
+                )
+
+'''
+<manifest>
+    <remote name="origin" fetch="http://code-sh.rnd.huawei.com/" review="http://code.huawei.com/" />
+    <default revision="master" remote="origin" sync-j="4" />
+    <project path="hert" name="ALL_REPO/hert/crsp" />
+</manifest>
+returns: name, relative_path, url
+'''
+
+def parse_manifest(manifest):
+    if not os.path.exists(manifest):
+        raise Exception("Failed to find manifest")
+
+    result = []
+    tree = ET.parse(manifest)
+    root = tree.getroot()
+
+    remote_url = ""
+    # first get remote
+    for remote in root.findall('remote'):
+        remote_url = remote.get('fetch')
+        break
+
+    # second get all projects
+    for project in root.findall('project'):
+        result.append((project.get("name"), project.get("path"), remote_url + project.get("name") + ".git"))
+
+    return result
+
+
+def exec_cmd(cmd):
+    cmd_process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    cmd_echo = cmd_process.stdout.read()
+    cmd_process.stdout.close()
+    sts = cmd_process.wait()
+    try:
+        cmd_echo = cmd_echo.decode('UTF-8')
+    except UnicodeDecodeError:
+        cmd_echo = cmd_echo.decode('gbk', errors='ignore')
+    if int(platform.python_version().split('.')[0]) < 3:
+        if platform.system().lower() == 'windows':
+            cmd_echo = cmd_echo.encode('gbk', errors='ignore')
+        else:
+            cmd_echo = cmd_echo.encode('UTF-8', errors='ignore')
+    return sts, cmd_echo.strip()
+
+
+class VenomShell(object):
+    def __init__(self, loglevel="error", versions=None, cache_dir=None):
+        self.inited = False
+        self.windows = platform.system().lower() == 'windows'
+        self.loglevel = loglevel
+
+        if not cache_dir:
+            cache_dir = "d:\\venom" if self.windows else "/usr/local/uci/code"
+
+        shell_bin = "shell.exe" if self.windows else "shell"
+        self.venom_path = os.path.join(cache_dir, "venom")
+        self.shell_link = os.path.join(self.venom_path, shell_bin) if self.windows else "/usr/local/bin/shell"
+
+        self.repo_rest_url = "http://venom.rnd.huawei.com/repo-rest"
+        self.remote_base = "/usr/contents/"
+        self.repo_url = "http://venom.rnd.huawei.com/repo/"
+        self.versions = versions
+
+    def init(self):
+        if self.inited:
+            return
+
+        if not os.path.isdir(self.venom_path):
+            os.makedirs(self.venom_path)
+
+        retry = 5
+        shell_path = self._checkout()
+        while shell_path is None and retry > 0:
+            time.sleep(1)
+            shell_path = self._checkout()
+            retry -= 1
+
+        if shell_path is None:
+            raise Exception("Failed to get shell from repo %s" % self.repo_rest_url)
+
+        if not self.windows:
+            os.chmod(shell_path, 0o777)
+
+        need_relink = True
+        if os.path.exists(self.shell_link):
+            if os.path.islink(self.shell_link):
+                if os.readlink(self.shell_link) == shell_path:
+                    need_relink = False
+                else:
+                    os.unlink(self.shell_link)
+            elif os.path.isdir(self.shell_link):
+                shutil.rmtree(self.shell_link)
+            elif os.path.isfile(self.shell_link):
+                os.remove(self.shell_link)
+        if need_relink:
+            os.symlink(shell_path, self.shell_link)
+
+        #  配置shell的缓存
+        config = {
+            "cache_dir": os.path.join(self.venom_path, "cache"),
+            "link_dir": os.path.join(self.venom_path, "artifacts"),
+            "logdir": os.path.join(self.venom_path, "log")
+        }
+
+        if not os.path.isdir(self.venom_path):
+            os.makedirs(self.venom_path)
+        
+        if self.windows:
+            shell_cfg = os.path.join(self.venom_path, "shell.cfg")
+        else:
+            venom_cfg_dir = "/usr/local/venom"
+            if not os.path.isdir(venom_cfg_dir):
+                os.makedirs(venom_cfg_dir)
+            shell_cfg = os.path.join(venom_cfg_dir, "shell.cfg")
+
+        with open(shell_cfg, 'w') as f:
+            f.write(json.dumps(config))
+
+        self.inited = True
+        logging.debug("shell path: %s" % shell_path)
+
+    def _checkout(self):
+        versions = []
+        pattern = r'shell-(\d+).exe' if self.windows else r'shell-(\d+)'
+
+        r = requests.get(self.repo_rest_url + self.remote_base)
+        if r.status_code != 200:
+            logging.error("Failed to get remote url, status code is %s", r.status_code)
+            return None
+        remote_versions = []
+        for version in r.json():
+            detail = version[len(self.remote_base):]
+            logging.debug("Find %s", detail)
+            if re.fullmatch(pattern, detail):
+                logging.debug("Find match %s", detail)
+                remote_versions.append(detail)
+
+        if len(remote_versions) == 0:
+            logging.error("Failed to get remote versions")
+            return None
+
+        remote_versions = sorted(remote_versions, reverse=True)
+        logging.debug("************ %s ************", remote_versions)
+        # get newest version
+        best_version = remote_versions[0]
+
+        for item in os.listdir(self.venom_path):
+            if os.path.isfile(os.path.join(self.venom_path, item)) and re.fullmatch(pattern, item):
+                logging.debug("Find downloaded shell %s", item)
+                versions.append(item)
+
+        shell_path = os.path.join(self.venom_path, best_version)
+        # only download when versions is absent
+        if best_version not in versions:
+            download_url = self.repo_url + best_version
+            logging.info("Begin to download %s", download_url)
+            r = requests.get(download_url)
+            if r.status_code != 200:
+                logging.error("Failed to download, response is %s", r.text)
+                return None
+
+            if os.path.exists(shell_path):
+                os.remove(shell_path)
+
+            with open(shell_path, "wb") as f:
+                f.write(r.content)
+        else:
+            logging.info("Shell version %s already in place", best_version)
+
+        return shell_path
+
+    def exec(self, artifact, entrypoint=None, params=None, trace=False):
+        if not self.inited:
+            raise Exception("Not inited")
+
+        shell_bin = "shell" if not self.windows else self.shell_link
+
+        cmds = [
+            "%s --artifact=%s --loglevel=%s" % (shell_bin, artifact, self.loglevel)
+        ]
+
+        if entrypoint:
+            cmds.append("--entrypoint=%s --params=\"%s\"" % (entrypoint, params))
+            if trace:
+                cmds.append("--trace")
+        if self.versions is not None:
+            cmds.append("--vercfg=%s" % self.versions)
+
+        cmd = " ".join(cmds)
+        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = child.communicate()
+        stdout = stdout.decode('utf8').strip()
+        stderr = stderr.decode('utf8').strip()
+        if child.returncode:
+            logging.error("output %s\n%s", stdout, stderr)
+            raise Exception('get return code %s for cmd %s', child.returncode, cmd)
+
+        return stdout, stderr
+
+
+class ProjectHelper(object):
+    def __init__(self, shell=None, cache_dir=None):
+        self.windows = platform.system().lower() == 'windows'
+        if shell:
+            self.shell = shell
+        else:
+            self.shell = VenomShell(cache_dir=cache_dir)
+
+    def init(self):
+        self.shell.init()
+
+        # download all artifacts first
+        if not self.windows:
+            self.shell.exec("venom-admin")
+            self.shell.exec("venom-client")
+        else:
+            self.shell.exec("venom-admin-win-host")
+            self.shell.exec("venom-client-win-host")
+
+    def get_project_ssh_url(self, project_name):
+        if not self.windows:
+            artifact = "venom-admin"
+            entrypoint = "admin"
+        else:
+            artifact = "venom-admin-win-host"
+            entrypoint = "admin.exe"
+
+        params = "--json project -o list -n %s" % project_name
+        stdout, _ = self.shell.exec(artifact=artifact, entrypoint=entrypoint, params=params, trace=False)
+        result = json.loads(stdout)
+        project_json = result[project_name]
+        return project_json["REPO_DEFINE"][0]["url"]
+
+    def get_project_by_url(self, url):
+        if not self.windows:
+            artifact = "venom-admin"
+            entrypoint = "admin"
+        else:
+            artifact = "venom-admin-win-host"
+            entrypoint = "admin.exe"
+
+        params = "--json project -o fetch --url=%s" % url
+        stdout, _ = self.shell.exec(artifact=artifact, entrypoint=entrypoint, params=params, trace=False)
+        result = json.loads(stdout)
+        return result[0]
+    
+    def get_project_by_name(self, name):
+        if not self.windows:
+            artifact = "venom-admin"
+            entrypoint = "admin"
+        else:
+            artifact = "venom-admin-win-host"
+            entrypoint = "admin.exe"
+
+        params = "--json project -o list -n %s" % name
+        stdout, _ = self.shell.exec(artifact=artifact, entrypoint=entrypoint, params=params, trace=False)
+        result = json.loads(stdout)
+        return result[name]
+
+    def get_head(self, project, branch, use_history):
+        if use_history:
+            logging.info("Get head from venom.")
+            head_commit = self.get_venom_branch_head(project, branch)
+        else:
+            logging.info("Get head from remote git.")
+            head_commit = self.get_branch_head(project, branch)
+        if not head_commit:
+            raise Exception("Failed to get head commit from project %s branch %s" % (project, branch))
+        return head_commit
+
+    def get_venom_branch_head(self, project, branch):
+        if not self.windows:
+            artifact = "venom-client"
+            entrypoint = "client"
+        else:
+            artifact = "venom-client-win-host"
+            entrypoint = "client.exe"
+
+        params = "--json --config=rb_config.json commits -o head -p %s -b %s" % (project, branch)
+        stdout, _ = self.shell.exec(artifact=artifact, entrypoint=entrypoint, params=params, trace=False)
+        result = json.loads(stdout)
+        return result
+
+    def get_branch_head(self, project, branch):
+        ssh_url = self.get_project_ssh_url(project)
+        cmd = "git ls-remote %s refs/heads/%s" % (ssh_url, branch)
+        ret, text = exec_cmd(cmd)
+        if ret != 0:
+            logging.error("get Head Hash Failed")
+            return ""
+        logging.info("Get url %s for %s, head is %s", ssh_url, project, text.split("refs")[0].strip())
+        return text.split("refs")[0].strip()
+
+
+class VenomCheckout(object):
+    def __init__(self, *initial_data, **kwargs):
+        for dictionary in initial_data:
+            for key in dictionary:
+                setattr(self, key, dictionary[key])
+        for key in kwargs:
+            setattr(self, key, kwargs[key])
+
+        self.project = self.project.lower()
+        self.mount_infos = []
+        self.mount_map = {}
+        self.alias_map = {
+            "510c00": ("hert-510c00", "510c00"),
+            "hert-510c00": ("hert-510c00", "510c00")
+        }
+
+        self.project_alias = self.project
+
+        self.shell = VenomShell(versions=self.versions, cache_dir=self.cache_dir)
+        self.project_helper = ProjectHelper(shell=self.shell)
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    def fetch_project_info(self, input, return_dict):
+        name, relative_path, url = input
+        project = self.project_helper.get_project_by_url(url)
+        commit_no = self.project_helper.get_head(project, self.branch, self.use_history)
+        # name is unique, so is thread safe
+        return_dict[name] = (project, commit_no, relative_path)
+
+    def init(self):
+        self.shell.init()
+        self.project_helper.init()
+
+        '''
+        if manifest is not provided, get commit from branch
+        else get manifest to projects
+        
+        question: client get manifest or venom get manifest?
+        answer: one client with one rofuse, venom client should not know the client
+        '''
+        self.mount_infos = []
+
+        project_alias = self.project
+        if self.project in self.alias_map:
+            self.project, project_alias = self.alias_map[self.project]
+
+        if not self.mount_point:
+            if self.windows:
+                self.mount_point = os.path.join("d:\\code", project_alias.upper())
+            else:
+                self.mount_point = os.path.join("/usr/local/uci/code", project_alias.upper())
+            
+        if self.manifest:
+            projects = parse_manifest(self.manifest)
+            manager = Manager()
+            return_dict = manager.dict()
+            processes = []
+            for project in projects:
+                p = Process(target=self.fetch_project_info, args=(project, return_dict))
+                processes.append(p)
+                p.start()
+
+            for p in processes:
+                p.join()
+
+            for name, _, _ in projects:
+                self.mount_infos.append(return_dict[name])
+        elif not self.commit_no and self.branch:
+            commit_no = self.project_helper.get_head(self.project, self.branch, self.use_history)
+            self.mount_infos.append((self.project, commit_no, self.mount_point))
+        elif not self.commit_no and not self.branch:
+            raise Exception("Failed to get commit or branch")
+        else:
+            self.mount_infos.append((self.project, self.commit_no, "."))
+
+        logging.info("mount_infos: %s" % self.mount_infos)
+
+    def get_config(self):
+        project_mount = "%s_%s" % (self.project, self.mount_point)
+        project_hash = hashlib.md5(project_mount.encode('utf8')).hexdigest()
+        logging.info("hashing %s to %s", project_mount, project_hash)
+
+        result = {}
+        result["cache-dir"] = os.path.join(self.shell.venom_path, ".cache")
+        result["temp-dir"] = os.path.join(self.shell.venom_path, ".tmp", project_hash)
+        result["tree-path"] = os.path.join(self.shell.venom_path, ".tree", project_hash)
+        result["output-path"] = os.path.join(self.shell.venom_path, ".output", project_hash)
+
+        return result
+
+    def checkout(self):
+        # cal the path from shell venom_path
+        config = self.get_config()
+
+        # 创建venom目录.并 删除.tmp目录，当前因为venom目录是rb_config.json中配置的，所以在/usr/local/uci/code/venom中
+        if self.clean:
+            tmp_path = config["temp-dir"]
+            if os.path.isdir(tmp_path):
+                logging.info("start rm .tmp ......")
+                shutil.rmtree(tmp_path)
+            else:
+                logging.info("empty tmp %s", tmp_path)
+
+        loglevel = "info"
+        if self.debug:
+            loglevel = "debug"
+
+        if not self.windows:
+            artifact = "venom-client"
+            entrypoint = "client"
+        else:
+            artifact = "venom-client-win-host"
+            entrypoint = "client.exe"
+
+        params_list = [
+            "--loglevel=%s" % loglevel, 
+            "commits -o checkout -p %s -i %s -M %s" % (self.project, self.build_id, self.mount_point)
+        ]
+        for k, v in config.items():
+            params_list.append("--%s=%s" % (k, v))
+
+        if len(self.mount_infos) == 1:
+            _, commit_no, _ = self.mount_infos[0]
+            params_list.append("-c %s" % commit_no)
+            params = " ".join(params_list)
+            stdout, _ = self.shell.exec(artifact=artifact, entrypoint=entrypoint, params=params, trace=True)
+            logging.debug("%s", stdout)
+        else:
+            mount_info_file = "/tmp/mount_infos_%s" % int(time.time())
+            with open(mount_info_file, "wb") as f:
+                f.write(json.dumps(self.mount_infos).encode("utf8"))
+            logging.info("Writing to temp mount_info file %s", mount_info_file)
+
+            params_list.append("-x %s" % mount_info_file)
+            params = " ".join(params_list)
+            stdout, _ = self.shell.exec(artifact=artifact, entrypoint=entrypoint, params=params, trace=True)
+            logging.debug("%s", stdout)
+
+        logging.info("Finish checkout for mountinfo %s", self.mount_infos)
+
+        if self.start_pre:
+            self.venom_pre()
+
+    def venom_pre(self):
+        #Find start script in project
+        project_info = self.project_helper.get_project_by_name(self.project)
+        start_cwd = project_info.get("START_CWD")
+        start_script = project_info.get("START_SCRIPT")
+
+        if start_script:
+            if start_cwd:
+                if self.windows:
+                    start_cwd = start_cwd.replace("/", "\\")
+                os.chdir(os.path.join(self.mount_point, start_cwd))
+
+            start_script = start_script.replace("{mount_point}", self.mount_point)
+            if 0 != os.system(start_script):
+                raise Exception("prepare project fail!")
+            logging.info("Finish runing pre on %s", self.mount_infos)
+        else:
+            logging.warning("No start script. skip.")
+
+def str2bool(v):
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]))
+    parser.add_argument('-p', '--project', type=str, default="hert-510c00", help='project name')
+    parser.add_argument('-M', '--mount-point', type=str, help='mountpoint')
+    parser.add_argument('-D', '--cache-dir', type=str, help='specific cache dir for client and shell')
+    parser.add_argument('-C', '--commit-no', type=str, help='specific commit_no')
+    parser.add_argument('-b', '--branch', type=str, default="master", help='branch to checkout to')
+    parser.add_argument('-i', '--build-id', type=str, default="local", help='branch trace info')
+    parser.add_argument('-v', '--versions', type=str, help='artifact version specific config')
+    parser.add_argument('-s', '--start-pre', action='store_true', help='whether start pre automatically')
+    parser.add_argument('-H', '--use-history', action='store_true', help='whether use venom history HEAD')
+    parser.add_argument('-c', '--clean', type=str2bool, nargs='?', const=True, default=True, help='whether clean the tmp')
+    parser.add_argument('-g', '--git-url', type=str, default='http://pihertbbuint:73imoA2uVSZzsdpr9bqL@code-sh.rnd.huawei.com/ROSA_RB/RB_V5R10C00.git', help='git url for clone')
+    parser.add_argument('-d', '--debug', action='store_true', default=False, help='debug mode')
+    parser.add_argument('-m', '--manifest', type=str, default="", help='Manifest file for multi repo')
+
+    try:
+        args = parser.parse_args()
+        arg_dict = vars(args)
+        arg_dict["windows"] = platform.system().lower() == 'windows'
+        arg_dict["project"] = arg_dict["project"].lower()
+
+        daemon = VenomCheckout(arg_dict)
+        # print(daemon)
+        daemon.init()
+        daemon.checkout()
+    except SystemExit:
+        pass
+    except:
+        logging.exception("Failed to checkout")
+        exit(1)
