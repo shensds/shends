@@ -1,0 +1,46 @@
+
+import os
+import subprocess
+import platform
+import re
+import ConfigParser
+import glob
+
+def exec_cmd(cmd):
+    cmd_process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    cmd_echo = cmd_process.stdout.read()
+    cmd_process.stdout.close()
+    sts = cmd_process.wait()
+    try:
+        cmd_echo = cmd_echo.decode('UTF-8')
+    except UnicodeDecodeError:
+        cmd_echo = cmd_echo.decode('gbk', errors='ignore')
+    if int(platform.python_version().split('.')[0]) < 3:
+        if platform.system().lower() == 'windows':
+            cmd_echo = cmd_echo.encode('gbk', errors='ignore')
+        else:
+            cmd_echo = cmd_echo.encode('UTF-8', errors='ignore')
+    return sts, cmd_echo.strip()
+
+def get_BoXiaoWang():
+    ret,text = exec_cmd('ipconfig')
+    #line = text.split('\n')
+    ip = re.search("9\.254\.\d+\.\d+",text)
+    return ip.group()
+    
+def set_ip(iniFile,ip):
+    if not os.path.isfile(iniFile): return 'notfile'
+    config = ConfigParser.ConfigParser()
+    config.readfp(open(iniFile))
+    config.set("ftp", "ip", ip)
+    fp = open(iniFile, "w")
+    config.write(fp)
+    fp.close()
+    
+
+if __name__ == '__main__':
+
+    ini_list = glob.glob(r"D:\gtr\py_gtr\testCase\510C10_bsp\*.ini")
+    ip = get_BoXiaoWang()
+    for inifile in ini_list:
+        set_ip(inifile,ip)
