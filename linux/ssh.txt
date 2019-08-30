@@ -1,0 +1,10 @@
+ssh免密码
+ssh-keygen    生成ssh密钥
+ssh-copy-id 远程主机名@ip  将id_rsa.pub拷贝到远程电脑
+
+指定别名
+~/.ssh/config
+Host 别名
+	Hostname IP
+	User     root
+	Port     22
