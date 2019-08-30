@@ -1,0 +1,142 @@
+# -*- coding: gb2312 -*-
+import ConfigParser
+import glob
+import os
+import logging
+import time
+import subprocess
+import platform
+
+logging.basicConfig(level=logging.DEBUG,
+            format='%(asctime)s %(filename)s line:%(lineno)d %(levelname)s:%(message)s',
+            datefmt='%H:%M:%S',
+            )
+            
+class BakUp():
+    def __init__(self,cfg):
+        self.cfg = cfg
+        
+    def run(self):
+        #手动指定版本
+        if self.cfg['smoke']['commitwithoutsmoke'].lower() == 'true':
+            successVer = os.path.join(self.cfg['smoke']['pkgdir'],self.cfg['smoke']['successVer'])
+            ret = shareVersion(successVer)
+        else:
+            successVer = self.findLastSuccessVersion()
+            ret = self.autobackPkg(successVer)
+        return ret
+        
+    def robocopy(self,srcDir,dst):
+        cmd = r"robocopy %s %s /E /Z /FFT /W:10 /R:5 /COPY:DT /MT:120 /ZB /NS /NC /NFL /NDL /NP /XX" %(srcDir, dst)  
+        logging.info(cmd)
+        ret = True
+        ret,text = self.getstatusoutput(cmd)
+        if ret >=8 or ret == -1:
+            ret = False
+        return ret,text
+        
+    def getstatusoutput(self,cmd):
+        cmd_process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        cmd_echo = cmd_process.stdout.read()
+        cmd_process.stdout.close()
+        sts = cmd_process.wait()
+        try:
+            cmd_echo = cmd_echo.decode('UTF-8')
+        except UnicodeDecodeError:
+            cmd_echo = cmd_echo.decode('gbk', errors='ignore')
+        if int(platform.python_version().split('.')[0]) < 3:
+            if platform.system() == 'Windows':
+                cmd_echo = cmd_echo.encode('gbk', errors='ignore')
+            else:
+                cmd_echo = cmd_echo.encode('UTF-8', errors='ignore')
+        if cmd_echo[-1:] == '\n': cmd_echo = cmd_echo[:-1]
+        return sts, cmd_echo
+    
+    def autobackPkg(self,successVer):
+        if successVer == None: 
+            logging.error("找不到冒烟成功的版本!")
+            return False
+        createTime = os.path.getctime(os.path.join(self.cfg['smoke']['pkgdir'], successVer))
+        createTime = time.localtime(createTime)
+        createTime = time.strftime('%Y-%m-%d %X', createTime)
+        logging.info( "最近一次冒烟成功的版本是 %s, 文件夹创建时间 %s" %(successVer, createTime))
+        if not os.path.isfile(self.cfg['commit']['succfile']): 
+            lastBackPkgVer = None
+        else:
+            fp = open(self.cfg['commit']['succfile'])
+            lastBackPkgVer = fp.read()
+            fp.close()
+        logging.info( "最近一次成功备份的版本是: %s" %lastBackPkgVer)
+        if lastBackPkgVer == successVer:
+            logging.info( "此版本已经备份，本次无需备份。")
+            return True
+        if True == self.shareVersion(successVer):
+            fp = open(self.cfg['commit']['succfile'], "w")
+            fp.write(successVer)#把备份成功的节点号写入文件
+            fp.close()
+            return True
+        return False
+            
+    def shareVersion(self, successVer):
+        desYunxia = os.path.join(self.cfg['share']['yunxia'], successVer)
+        srcDir = os.path.join(self.cfg['smoke']['pkgdir'], successVer)
+        #如果本地存在软件包，则直接从本地往云下拷贝
+        if os.path.isfile(os.path.join(self.cfg['smoke']['localpkgdir'],successVer,"BackUpToLocalSuccss")):
+            logging.info("本地存在该版本，直接从本地往云下拷贝")
+            #把ok.txt拷贝到本地
+            os.system("xcopy %s\\*.txt %s\\ /y " %(srcDir, os.path.join(self.cfg['smoke']['localpkgdir'],successVer)))
+            srcDir = os.path.join(self.cfg['smoke']['localpkgdir'], successVer)
+        #往云下拷贝，可能存在多个路径
+        for i in self.cfg['share']:
+            desYunxia = os.path.join(self.cfg['share'][i], successVer)
+            ret,text = self.robocopy(srcDir, desYunxia)
+            if not ret: 
+                logging.error(text)
+                return False
+        return True
+    
+    def findLastSuccessVersion(self):
+        fileList = glob.glob(os.path.join(self.cfg['smoke']['pkgdir'], cfg['basic']['prefix'] + '*' ))
+        fileList.sort(key=lambda x: os.path.getctime(x))
+        fileList.reverse()
+        subDirList = [d.split("\\")[-1] for d in fileList]
+        for subDir in subDirList:
+            print(subDir)
+            if not self.isSuccessVersion(os.path.join(cfg['smoke']['pkgdir'], subDir)): 
+                continue
+            return subDir
+        return None
+
+        
+    def isSuccessVersion(self,dirName):
+        for board in self.cfg['smoke']['boardlist'].split(","):
+            flgFile = "%s\\%s_ok.txt" %(dirName, board)
+            if not os.path.isfile(flgFile):
+                logging.info("%s is not exist!" %flgFile)
+                return False
+        return True
+    
+    
+def readCfg(iniFile):
+    cfg = {}
+    config = ConfigParser.ConfigParser()
+    config.readfp(open(iniFile))
+    for section in config.sections():
+        cfg[section] = {}
+        for option in config.options(section):
+            cfg[section][option] = config.get(section, option)
+            print "cfg[%s][%s] = %s" %(section, option, config.get(section, option))
+    return cfg
+
+
+if __name__ == '__main__':
+
+    cfgFile = "hertBackUpPkg.ini"
+    cfg = readCfg(cfgFile)
+    bak = BakUp(cfg)
+    ret = bak.run()
+    if False == ret:
+        logging.error("软件包拷贝失败！")
+        exit(1)
+    else:
+        exit(0)
