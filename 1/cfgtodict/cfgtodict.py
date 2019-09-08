@@ -8,7 +8,7 @@ def readCfg(inifile):
         for i in fp.readlines():
             #去除BOM
             #i = i.replace(codecs.BOM_UTF8, '')
-            i = i.strip(" \n").replace(" ","")
+            i = i.strip("\n").strip(" ")#.replace(" ","")
             if len(i)==0:continue
             if (i[0] =="#") or (i[0] ==";"):continue
             file_list.append(i)
@@ -19,8 +19,8 @@ def readCfg(inifile):
             cfg[key]={}
             continue
         if "=" in i:val = i.split("=",1)
-        if ":" in i:val = i.split(":",1)
-        cfg[key][val[0]] = val[1]
+        #if ":" in i:val = i.split(":",1)
+        cfg[key][val[0].strip()] = val[1].strip()
     return cfg
 
 def writeCfg(inifile,key1,key2,val):
@@ -36,12 +36,23 @@ def writeCfg(inifile,key1,key2,val):
             flag = 1
             continue
         if flag == 1:
-            #进入下一个key抛出异常
-            if (cfg[i].strip(" \n")[0] == "[") and (cfg[i].strip(" \n")[-1] == "]"):
-                return False
-            if cfg[i].split("=",1)[0].strip() == key2 or \
-               cfg[i].split(":",1)[0].strip() == key2:
+            #进入下一个key新增key2
+            if (cfg[i].strip("\n")[0] == "[") and (cfg[i].strip("\n")[-1] == "]"):
+                newline = key2 + "=" + val +"\n"
+                cfg = cfg[:i] + [newline] + cfg[i:]
+                return writeFile(inifile,cfg)
+            if cfg[i].split("=",1)[0].strip() == key2: 
                 cfg[i] = key2 + "=" + val +"\n"
-                break
+                return writeFile(inifile,cfg)
+    if flag == 1:
+        newline = key2 + "=" + val +"\n"
+        cfg = cfg + [newline]
+        return writeFile(inifile,cfg)
+    else:
+        #key1不存在时
+        cfg = cfg + ["[%s]\n%s=%s"%(key1,key2,val)]
+        return writeFile(inifile,cfg)
+        
+def writeFile(inifile,cfg):
     with open(inifile,"w",encoding = "utf-8") as fp:
         fp.writelines(cfg)
