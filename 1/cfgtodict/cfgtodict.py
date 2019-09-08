@@ -56,3 +56,21 @@ def writeCfg(inifile,key1,key2,val):
 def writeFile(inifile,cfg):
     with open(inifile,"w",encoding = "utf-8") as fp:
         fp.writelines(cfg)
+        
+''' 
+def readCfg(iniFile):
+    cfg = {}
+    config = ConfigParser.ConfigParser()
+    config.readfp(open(iniFile))
+    for section in config.sections():
+        cfg[section] = {}
+        for option in config.options(section):
+            cfg[section][option] = config.get(section, option)
+            print("cfg[%s][%s] = %s" % (section, option, config.get(section, option)))
+    return cfg
+        
+        
+        
+        
+        
+        

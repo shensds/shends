@@ -4,3 +4,5 @@ git config --global core.quotepath false
 配置账户
 git config --global user.email "you@example.com"
 git config --global user.name "Your Name"
+#忽略文件权限
+git config --global core.fileMode false
