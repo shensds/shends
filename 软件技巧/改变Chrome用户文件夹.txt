@@ -1,0 +1,1 @@
+C:\Users\shends\AppData\Local\Google\Chrome\Application\chrome.exe --user-data-dir="D:\prog\Chrome\data"
