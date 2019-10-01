@@ -1,1 +1,0 @@
-robocopy "D:\external\open_source" "D:\510C10\open_source"  /E /Z /FFT /W:10 /R:5 /COPY:DT /ZB /NS /NC /NFL /NDL /NP /XF *.pyc /XD .svn /XD .git
