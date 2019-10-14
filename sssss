@@ -1,0 +1,97 @@
+#coding:GB2312
+import socket
+import sys
+import os
+import time
+from threading import Thread
+import logging
+
+logging.basicConfig(level=logging.DEBUG,
+            format='%(asctime)s %(filename)s line:%(lineno)d %(levelname)s:%(message)s',
+            datefmt='%H:%M:%S',
+            )
+class socketServer():
+    def __init__(self):
+        self.listen()
+        self.src_list = {}
+        self.clean()
+    
+    def clean(self):
+        thread0 = Thread(target = self.clean_src_list)
+        thread0.start()
+        
+    def clean_src_list(self):
+        while 1:
+            logging.info("开始清理字典")
+            for i in self.src_list:
+                if time.time() - self.src_list[i]["time"] > 60*60:
+                    logging.info("清理：%s"%self.src_list[i])
+                    del  self.src_list[i]
+            time.sleep(60*60)
+
+    def listen(self):
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+        host = socket.gethostname()
+        port = 9999
+        self.s.bind((host, port))
+        self.s.listen(15)
+        
+    def start(self):
+        while True:
+            # 建立客户端连接
+            clientsocket,addr = self.s.accept()
+            print("连接地址: %s" % str(addr))
+            msg = clientsocket.recv(1024)
+            print(msg)
+            if msg[0:3] == "get":
+                src = msg[3:]
+                if src not in self.src_list:
+                    self.src_list[src] = {}
+                    self.src_list[src]["time"] = time.time()
+                    self.src_list[src]["ok"] = False
+                    clientsocket.send("wait")
+                    clientsocket.close()
+                    thread0 = Thread(target = self.get_file_list,args=(src,))
+                    thread0.start()
+                elif self.src_list[src]["ok"]:
+                    logging.info("准备发送文件")
+                    if len(self.src_list[src]["file_list"]) ==0:
+                        logging.info("列表为空，文件复制完毕")
+                        clientsocket.send("end")
+                        clientsocket.close()
+                    else:
+                        msg = self.src_list[src]["file_list"][0]
+                        logging.info(msg)
+                        del self.src_list[src]["file_list"][0]
+                        clientsocket.send(msg)
+                        clientsocket.close()
+                else:
+                    logging.info("正在获取文件列表.....")
+                    clientsocket.send("wait")
+                    print(msg)
+                    clientsocket.close()
+            else:
+                logging.info("获取文件列表请发送：get")
+
+        
+    def get_all_file(self,path):
+        file_list = []
+        for root, dirs, files in os.walk(path, topdown=False):
+            for name in files:
+                file = os.path.abspath(os.path.join(root, name))
+                file = file.replace(path,"")
+                file = file.lstrip("\\")
+                file_list.append(file)
+        return file_list
+        
+    def get_file_list(self,src):
+        logging.info("正在获取文件列表：")
+        logging.info(src)
+        self.src_list[src]["file_list"] = self.get_all_file(src)
+        self.src_list[src]["ok"] = True
+
+
+
+a = socketServer()
+a.start()
+
