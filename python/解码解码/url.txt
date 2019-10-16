@@ -1,0 +1,10 @@
+编码
+
+from urllib.parse import quote
+text = quote(text, 'utf-8')
+1
+2
+解码
+
+from urllib.parse import unquote
+text = unquote(text, 'utf-8')
