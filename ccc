@@ -1,0 +1,468 @@
+LFG1000796251:/backup/cmake/link_shared_library # tree
+02
+.
+03
+|-- CMakeLists.txt
+04
+|-- build
+05
+|-- hello
+06
+|   |-- CMakeLists.txt
+07
+|   |-- hello.c
+08
+|   `-- hello.h
+09
+|-- main.c
+10
+`-- world
+11
+    |-- CMakeLists.txt
+12
+    |-- world.c
+13
+    `-- world.h
+源代码如下：
+-C 代码
+01
+//--------------- main.c
+02
+#include <stdio.h>
+03
+#include "hello.h"
+04
+#include "world.h"
+05
+ 
+06
+int main()
+07
+{
+08
+    hello();
+09
+    world();
+10
+}
+11
+ 
+12
+//-------------- ./hello/hello.c
+13
+#include <stdio.h>
+14
+ 
+15
+void hello()
+16
+{
+17
+    printf("hello\n");
+18
+}
+19
+//--------- ./hello/hello.h
+20
+#ifndef HELLO_H
+21
+#define HELLO_H
+22
+ 
+23
+void hello();
+24
+ 
+25
+#endif
+26
+ 
+27
+//----------  ./world/world.c
+28
+#include <stdio.h>
+29
+#include "hello.h"
+30
+ 
+31
+void world()
+32
+{
+33
+    hello();
+34
+    printf("world\n");
+35
+}
+36
+ 
+37
+//-----------./world/world.h
+38
+#ifndef WORLD_H
+39
+#define WORLD_H
+40
+ 
+41
+void world();
+42
+ 
+43
+#endif
+CMakeLists.txt如下：
+-Bash 代码
+01
+# ---------- CMakeLists.txt
+02
+cmake_minimum_required(VERSION 3.12.1)
+03
+ 
+04
+project(main)
+05
+ 
+06
+set(CMAKE_C_COMPILER gcc)
+07
+ 
+08
+set(CMAKE_SKIP_BUILD_RPATH TRUE CACHE BOOL "" FORCE)
+09
+ 
+10
+add_subdirectory(hello)
+11
+ 
+12
+add_subdirectory(world)
+13
+ 
+14
+add_executable(main main.c)
+15
+ 
+16
+target_include_directories(main PRIVATE ${CMAKE_SOURCE_DIR}/hello ${CMAKE_SOURCE_DIR}/world)
+17
+ 
+18
+target_link_libraries(main hello world)
+19
+ 
+20
+# ---------------- ./hello/CMakeLists.txt
+21
+add_library(hello SHARED hello.c)
+22
+ 
+23
+# ------------ ./world/CMakeLists.txt
+24
+add_library(world SHARED world.c)
+25
+ 
+26
+target_include_directories(world PRIVATE ${CMAKE_SOURCE_DIR}/hello)
+27
+ 
+28
+target_link_libraries(world hello)
+生成编译命令如下：
+
+-Bash 代码
+1
+gcc -Dhello_EXPORTS  -fPIC   -o CMakeFiles/hello.dir/hello.c.o   -c /backup/cmake/link_shared_library/hello/hello.c
+2
+gcc -fPIC   -shared -Wl,-soname,libhello.so -o libhello.so CMakeFiles/hello.dir/hello.c.o
+3
+ 
+4
+gcc -Dworld_EXPORTS -I/backup/cmake/link_shared_library/hello  -fPIC   -o CMakeFiles/world.dir/world.c.o   -c /backup/cmake/link_shared_library/world/world.c
+5
+gcc -fPIC   -shared -Wl,-soname,libworld.so -o libworld.so CMakeFiles/world.dir/world.c.o ../hello/libhello.so
+6
+ 
+7
+gcc  -I/backup/cmake/link_shared_library/hello -I/backup/cmake/link_shared_library/world   -o CMakeFiles/main.dir/main.c.o   -c /backup/cmake/link_shared_library/main.c
+8
+gcc    CMakeFiles/main.dir/main.c.o  -o main world/libworld.so hello/libhello.so
+
+测试工程简要描述，main.c调用了hello.c和world.c中的函数，world.c调用了hello.c的函数。hello.c生成动态库libhello.so, world.c生成动态库libworld.so, main.c生成可执行程序。由于我司禁止使用rpath链接选项，CMake工程中通过命令set(CMAKE_SKIP_BUILD_RPATH TRUE CACHE BOOL "" FORCE)屏蔽了rpath链接选项。在生成的动态库的链接命令中，有两个链接选项-Wl,-soname,libhello.so和-Wl,-soname,libworld.so。本文主要分析如何使用-Wl,-soname这个链接选项。
+
+gcc手册中对该选项的描述如下：
+-soname=name
+When creating an ELF shared object, set the internal DT_SONAME field to the specified name. When an executable is linked with a shared object which has a DT_SONAME field, then when the executable is run the dynamic linker will attempt to load the shared object specified by the DT_SONAME field rather than the using the file name given to the linker.
+
+创建ELF共享对象时，将内部DT_SONAME字段设置为指定的名称。 当可执行文件与具有DT_SONAME字段的共享对象链接时，则在运行可执行文件时，动态链接器将尝试加载由DT_SONAME字段指定的共享对象，而不是使用为链接器指定的文件名。
+
+通过下面的命令，我们可以查看libhello.so和libworld.so中的DT_SONAME字段的值：
+-Bash 代码
+1
+LFG1000796251:/backup/cmake/link_shared_library/build # objdump -x ./hello/libhello.so | grep SONAME
+2
+  SONAME               libhello.so
+3
+LFG1000796251:/backup/cmake/link_shared_library/build # objdump -x ./world/libworld.so | grep SONAME
+4
+  SONAME               libworld.so
+由此可见，DT_SONAME的值分别为libhello.so和libworld.so。
+我们还可以通过下面的命令查看动态库的依赖关系，如下：
+-Bash 代码
+1
+LFG1000796251:/backup/cmake/link_shared_library/build # objdump -x main | grep NEEDED
+2
+  NEEDED               libworld.so
+3
+  NEEDED               libhello.so
+4
+  NEEDED               libc.so.6
+5
+LFG1000796251:/backup/cmake/link_shared_library/build # objdump -x ./world/libworld.so | grep NEEDED
+6
+  NEEDED               libhello.so
+7
+  NEEDED               libc.so.6
+8
+LFG1000796251:/backup/cmake/link_shared_library/build # objdump -x ./hello/libhello.so | grep NEEDED
+9
+  NEEDED               libc.so.6
+我们可以从生成的编译命令中看出，链接动态库libworld.so时，传递给链接器的动态库名称为../hello/libhello.so;而链接可执行程序main时，传递给链接器的动态库名称为world/libworld.so和hello/libhello.so。
+如果在构建时使用了-Wl,-soname这个链接选项，在目标程序运行时，ld.so程序按照SONAME在指定路径中查找动态库，而不是按照../hello/libhello.so，world/libworld.so和hello/libhello.so去查找动态库。
+我们运行目标程序，提示找不到动态库，如下：
+-Bash 代码
+1
+LFG1000796251:/backup/cmake/link_shared_library/build # ./main
+2
+./main: error while loading shared libraries: libworld.so: cannot open shared object file: No such file or directory
+我们需要在环境变量LD_LIBRARY_PATH中设置动态库的查找路径，就可以正常运行目标程序了，如下：
+-Bash 代码
+1
+LFG1000796251:/backup/cmake/link_shared_library/build # export LD_LIBRARY_PATH=/backup/cmake/link_shared_library/build/hello:/backup/cmake/link_shared_library/build/world
+2
+LFG1000796251:/backup/cmake/link_shared_library/build # echo $LD_LIBRARY_PATH
+3
+/backup/cmake/link_shared_library/build/hello:/backup/cmake/link_shared_library/build/world
+4
+LFG1000796251:/backup/cmake/link_shared_library/build # ./main
+5
+hello
+6
+hello
+7
+world
+
+假如我们去掉-Wl,-soname这个选项，将会导致目标程序运行时按照../hello/libhello.so，world/libworld.so和hello/libhello.so去查找动态库，这时无论如何配置LD_LIBRARY_PATH，目标程序都不可能正常运行。
+CMakeLists.txt修改如下：
+-Bash 代码
+01
+# --------- ./hello/CMakeLists.txt
+02
+add_library(hello SHARED hello.c)
+03
+ 
+04
+set_target_properties(hello PROPERTIES NO_SONAME 1)
+05
+ 
+06
+# --------- ./world/CMakeLists.txt
+07
+add_library(world SHARED world.c)
+08
+ 
+09
+target_include_directories(world PRIVATE ${CMAKE_SOURCE_DIR}/hello)
+10
+ 
+11
+target_link_libraries(world hello)
+12
+ 
+13
+set_target_properties(world PROPERTIES NO_SONAME 1)
+
+生成的编译命令如下：
+-Bash 代码
+1
+gcc -Dhello_EXPORTS  -fPIC   -o CMakeFiles/hello.dir/hello.c.o   -c /backup/cmake/link_shared_library/hello/hello.c
+2
+gcc -fPIC   -shared  -o libhello.so CMakeFiles/hello.dir/hello.c.o
+3
+ 
+4
+gcc -Dworld_EXPORTS -I/backup/cmake/link_shared_library/hello  -fPIC   -o CMakeFiles/world.dir/world.c.o   -c /backup/cmake/link_shared_library/world/world.c
+5
+gcc -fPIC   -shared  -o libworld.so CMakeFiles/world.dir/world.c.o ../hello/libhello.so
+6
+ 
+7
+gcc  -I/backup/cmake/link_shared_library/hello -I/backup/cmake/link_shared_library/world   -o CMakeFiles/main.dir/main.c.o   -c
+8
+gcc    CMakeFiles/main.dir/main.c.o  -o main world/libworld.so hello/libhello.so
+
+查看DT_SONAME, 动态库依赖关系，以及ldd解析结果如下：
+
+-Bash 代码
+01
+LFG1000796251:/backup/cmake/link_shared_library/build # objdump -x ./hello/libhello.so | grep SONAME
+02
+LFG1000796251:/backup/cmake/link_shared_library/build # objdump -x ./hello/libhello.so | grep NEEDED
+03
+  NEEDED               libc.so.6
+04
+LFG1000796251:/backup/cmake/link_shared_library/build # ldd ./hello/libhello.so
+05
+        linux-vdso.so.1 =>  (0x00007fff176c8000)
+06
+        libachk.so => /lib64/libachk.so (0x00007fd66481f000)
+07
+        libc.so.6 => /lib64/libc.so.6 (0x00007fd6644a8000)
+08
+        libdl.so.2 => /lib64/libdl.so.2 (0x00007fd6642a4000)
+09
+        libpthread.so.0 => /lib64/libpthread.so.0 (0x00007fd664087000)
+10
+        librt.so.1 => /lib64/librt.so.1 (0x00007fd663e7d000)
+11
+        /lib64/ld-linux-x86-64.so.2 (0x00007fd664c5e000)
+12
+LFG1000796251:/backup/cmake/link_shared_library/build # objdump -x ./world/libworld.so | grep SONAME
+13
+LFG1000796251:/backup/cmake/link_shared_library/build # objdump -x ./world/libworld.so | grep NEEDED
+14
+  NEEDED               ../hello/libhello.so
+15
+  NEEDED               libc.so.6
+16
+LFG1000796251:/backup/cmake/link_shared_library/build # ldd ./world/libworld.so
+17
+        linux-vdso.so.1 =>  (0x00007fff3d1ff000)
+18
+        libachk.so => /lib64/libachk.so (0x00007f8c5b038000)
+19
+        ../hello/libhello.so => not found
+20
+        libc.so.6 => /lib64/libc.so.6 (0x00007f8c5acc1000)
+21
+        libdl.so.2 => /lib64/libdl.so.2 (0x00007f8c5aabd000)
+22
+        libpthread.so.0 => /lib64/libpthread.so.0 (0x00007f8c5a89f000)
+23
+        librt.so.1 => /lib64/librt.so.1 (0x00007f8c5a696000)
+24
+        /lib64/ld-linux-x86-64.so.2 (0x00007f8c5b477000)
+25
+LFG1000796251:/backup/cmake/link_shared_library/build # objdump -x main | grep SONAME
+26
+LFG1000796251:/backup/cmake/link_shared_library/build # objdump -x main | grep NEEDED
+27
+  NEEDED               world/libworld.so
+28
+  NEEDED               hello/libhello.so
+29
+  NEEDED               libc.so.6
+30
+LFG1000796251:/backup/cmake/link_shared_library/build # ldd main
+31
+        linux-vdso.so.1 =>  (0x00007fff2dce3000)
+32
+        libachk.so => /lib64/libachk.so (0x00007f36d3574000)
+33
+        world/libworld.so (0x00007f36d3372000)
+34
+        hello/libhello.so (0x00007f36d3170000)
+35
+        libc.so.6 => /lib64/libc.so.6 (0x00007f36d2df9000)
+36
+        libdl.so.2 => /lib64/libdl.so.2 (0x00007f36d2bf4000)
+37
+        libpthread.so.0 => /lib64/libpthread.so.0 (0x00007f36d29d7000)
+38
+        librt.so.1 => /lib64/librt.so.1 (0x00007f36d27ce000)
+39
+        /lib64/ld-linux-x86-64.so.2 (0x00007f36d37b1000)
+40
+        ../hello/libhello.so => not found
+
+从中可以看出，目标程序运行时将使用链接命令中的../hello/libhello.so，world/libworld.so和hello/libhello.so去查找动态库，而不是用动态库的名称去查找。此时无论如何配置LD_LIBRARY_PATH，程序都无法运行，如下：
+-Bash 代码
+1
+LFG1000796251:/backup/cmake/link_shared_library/build # export LD_LIBRARY_PATH=/backup/cmake/link_shared_library:/backup/cmake/link_shared_library/build:/backup/cmake/link_shared_library/build/hello:/backup/cmake/link_shared_library/build/world
+2
+LFG1000796251:/backup/cmake/link_shared_library/build # echo $LD_LIBRARY_PATH
+3
+/backup/cmake/link_shared_library:/backup/cmake/link_shared_library/build:/backup/cmake/link_shared_library/build/hello:/backup/cmake/link_shared_library/build/world
+4
+LFG1000796251:/backup/cmake/link_shared_library/build # ./main
+5
+./main: error while loading shared libraries: ../hello/libhello.so: cannot open shared object file: No such file or directory
+
+我司很多项目在做CMake整改时，为了和原来的编译命令一摸一样，去掉了-Wl,-soname选项，这有可能导致目标程序无法运行。因此建议默认带上-Wl,-soname这个选项。
+
+如果一定要去掉-Wl,-soname选项，就只能使用“-L/path/to/lib -llib”的方式链接，不能直接使用target名称，并且要手工加上target依赖关系。如下：
+
+-Bash 代码
+01
+# --------------------- ./world/CMakeLists.txt
+02
+add_library(world SHARED world.c)
+03
+ 
+04
+target_include_directories(world PRIVATE ${CMAKE_SOURCE_DIR}/hello)
+05
+ 
+06
+set_target_properties(world PROPERTIES LINK_FLAGS "-L${CMAKE_BINARY_DIR}/hello -lhello")
+07
+ 
+08
+add_dependencies(world hello)
+09
+ 
+10
+set_target_properties(world PROPERTIES NO_SONAME 1)
+11
+ 
+12
+# ---------------------- CMakeLists.txt
+13
+cmake_minimum_required(VERSION 3.12.1)
+14
+ 
+15
+project(main)
+16
+ 
+17
+set(CMAKE_C_COMPILER gcc)
+18
+ 
+19
+set(CMAKE_SKIP_BUILD_RPATH TRUE CACHE BOOL "" FORCE)
+20
+ 
+21
+add_subdirectory(hello)
+22
+ 
+23
+add_subdirectory(world)
+24
+ 
+25
+add_executable(main main.c)
+26
+ 
+27
+target_include_directories(main PRIVATE ${CMAKE_SOURCE_DIR}/hello ${CMAKE_SOURCE_DIR}/world)
+28
+ 
+29
+set_target_properties(main PROPERTIES LINK_FLAGS "-L${CMAKE_BINARY_DIR}/world -L${CMAKE_BINARY_DIR}/hello  -lworld -lhello")
+30
+ 
+31
+add_dependencies(main world hello)
