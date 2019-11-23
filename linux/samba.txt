@@ -1,3 +1,5 @@
+sudo apt-get install cifs-utils
+
 cat /etc/issue查看当前正在运行的 Ubuntu 的版本号。
 
 sudo apt-get upgrade  

@@ -30,7 +30,7 @@ def ftp_server():
     # m	创建文件
     # w	写权限
     # M	文件传输模式(通过FTP设置文件权限 )
-    authorizer.add_user('admin', 'admin', 'E:\\', perm='elradfmw')
+    authorizer.add_user('admin', 'admin', 'F:\\', perm='elradfmw')
 
     #添加匿名用户 只需要路径
     #authorizer.add_anonymous('/home/')
