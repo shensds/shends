@@ -38,8 +38,8 @@ from ftplib import FTP
 class FtpClicent():
     def __init__(self):
         self.ftp = FTP()
-        host = "192.168.123.168"
-        port = 1234
+        host = "192.168.123.50"
+        port = 2121
         user = ""
         passwd = ""
         self.login(host, port, user, passwd)

@@ -38,7 +38,7 @@ from ftplib import FTP
 class FtpClicent():
     def __init__(self):
         self.ftp = FTP()
-        host = "192.168.123.147"
+        host = "192.168.123.88"
         port = 2121
         user = ""
         passwd = ""
@@ -82,8 +82,6 @@ class FtpClicent():
                  logging.info(path)
                  self.ftp.mkd(path)
 
-
-
     def ls_l(self, *args):
         cmd = 'LIST'
         for arg in args:
@@ -107,8 +105,6 @@ class FtpClicent():
         for i in dir_list:
             self.get_dir_file(i,list)
                 
-            
-        
     def get_file_list(self,path):
         list = []
         self.get_dir_file(path,list)
@@ -177,6 +173,7 @@ def test():
     #ftp.uploadfile(r"e:\music\music\华语\1983组合 - 等爱走了以后.mp3","music/华语/1983组合 - 等爱走了以后.mp3")
 #ftp.downloadfile("1.file","d:\\1.file")
 to_phone()
+to_windows()
 
 
 

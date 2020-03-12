@@ -35,8 +35,8 @@ def get_m3u8_list(m3u8):
     return ts_list
 
 def start():
-    src = "E:\\uc"
-    dst = "E:\\h\\uc2"
+    src = "E:\\uc\\uc"
+    dst = "c:\\h\\uc"
     
     dir_list = os.listdir(src)
     for i in dir_list:
