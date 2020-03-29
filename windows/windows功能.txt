@@ -1,0 +1,7 @@
+1，用管理员身份运行cmd.
+2，运行 dism /online  /Get-Features >C:\1.txt，这样会在C盘生成一个txt文件，文件内容是功能列表，可以对照“打开或关闭windows功能”。
+start /w pkgmgr /iu:Internet-Explorer-Optional-amd64  启用Internet-Explorer-Optional-amd64功能
+
+start /w pkgmgr /uu:Internet-Explorer-Optional-amd64 关闭 Internet-Explorer-Optional-amd64功能
+
+start /w pkgmgr /iu:ClientForNFS-Infrastructure
