@@ -1,4 +1,4 @@
-#!C:\python3
+#!C:\python37\python.exe
 # -*- coding: UTF-8 -*-
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler, ThrottledDTPHandler
@@ -55,8 +55,8 @@ def ftp_server():
     server = FTPServer((ip, "2121"), handler)
 
     #最大连接数
-    server.max_cons = 20
-    server.max_cons_per_ip = 10
+    server.max_cons = 2
+    server.max_cons_per_ip = 2
     
     #开始服务
     print('开始服务')
