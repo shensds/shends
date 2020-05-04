@@ -79,8 +79,3 @@ firewall-cmd --add-forward-port=proto=80:proto=tcp:toaddr=192.168.0.1:toport=808
 2） 即时生效，重启后复原
 开启： service iptables start
 关闭： service iptables stop
---------------------- 
-作者：朽木o0 
-来源：CSDN 
-原文：https://blog.csdn.net/s_p_j/article/details/80979450 
-版权声明：本文为博主原创文章，转载请附上博文链接！
