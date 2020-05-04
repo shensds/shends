@@ -1,3 +1,6 @@
+#获取分支节点
+git ls-remote http://pihertbbuint:73imoA2uVSZzsdpr9bqL@code-sh.rnd.huawei.com/ROSA_RB/RB_V5R10C00.git refs/heads/master
+
 中文乱码
 git config --global core.quotepath false
 
@@ -6,3 +9,15 @@ git config --global user.email "you@example.com"
 git config --global user.name "Your Name"
 #忽略文件权限
 git config --global core.fileMode false
+
+git config --global core.autocrlf true // 表示自动更换crlf，windows下如果checkout是\n，则自动换为\r\n，在提交时在自动换回\n
+git config --global core.autocrlf input // 自动把\r\n换为\n
+git config --global core.autocrlf false // 就是不作处理
+如果已经产生了\r\n，merge时产生问题，可以设置
+git config merge.renormalize true // merge时忽略行尾对比
+如果只需要执行一次merge可以是用命令
+git merge -s recursive -X ignore-space-at-eol origin/master
+还可以设置crlf安全检查
+git config --global core.safecrlf true // 禁止提交混合\n和\r\n的文件
+git config --global core.safecrlf false // 允许提交
+git config --global core.safecrlf warn // 提交时产生警告

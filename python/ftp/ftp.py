@@ -1,4 +1,4 @@
-
+# coding=utf-8
 """
 Python FTP 操作
 from ftplib import FTP      # 加载ftp模块
@@ -26,89 +26,130 @@ ftp.rename(fromname, toname)    #将fromname改为toname
 ftp.storbinaly('STOR filename.txt',file_handel,bufsize)  # 上传目标文件
 ftp.retrbinary('RETR filename.txt',file_handel,bufsize)  # 下载FTP文件
 """
- 
+import logging
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(filename)s line:%(lineno)d %(levelname)s:%(message)s',
+                    datefmt='%H:%M:%S',
+                    )
 import os
 from ftplib import FTP
- 
- 
-class FTPClient(FTP):
-    """ FTP 客户端 """
- 
-    def ftplogin(self, host, port, username, password):
-        """ 登录 """
-        self.connect(host, port)
-        self.login(username, password)
+
+class FtpClicent():
+    def __init__(self):
+        self.ftp = FTP()
+        self.host = "192.168.123.50"
+        self.port = 2121
+        self.user = ""
+        self.passwd = ""
+        #self.login(host, port, user, passwd)
+        #远程目录列表
+        self.exists = set()
+
+    def login(self):
+        logging.info("开始连接...")
+        self.ftp.connect(self.host, self.port)
+        logging.info("连接成功")
+        self.ftp.login(self.user, self.passwd)
+        logging.info("登录成功")
+        self.ftp.encoding = 'utf-8'
+
+    def listdir(self,path):
+        _list = self.ftp.nlst(path)
+        list = []
+        for i in _list:
+            list.append(i.lower())
+        return list
+
+    def mkdir(self,path):
+        if path in self.exists:
+            #logging.info("路径%s存在"%path)
+            return
+        if path == "":
+            return
+        self.exists.add(path)
+        logging.info(path)
+        path_list = path.split("/")
+        path = ""
+        for i in path_list:
+            x = self.listdir(path)
+            if path == "":
+                path = i
+            else:
+                path += "/" + i
+            if i.lower() not in x:
+                 logging.info(path)
+                 self.ftp.mkd(path)
+
+
+
+    def ls_l(self, *args):
+        cmd = 'LIST'
+        for arg in args:
+            cmd = cmd + (' ' + arg)
+        files = []
+        self.ftp.retrlines(cmd, files.append)
+        return files
         
+    def get_dir_file(self,path,list):
+        path_list = self.ls_l(path)
+        dir_list = []
+        file_list = []
+        for i in path_list:
+            name = i[51:]
+            name = path + "/" + name
+            if i[0] == "d":
+                dir_list.append(name)
+            else:
+                file_list.append(name)
+        list += file_list
+        for i in dir_list:
+            self.get_dir_file(i,list)
+                
+            
+        
+    def get_file_list(self,path):
+        list = []
+        self.get_dir_file(path,list)
+        return list
+
     def downloadfile(self, remotepath, localpath=None):
         """ 下载文件 """
         bufsize = 1024
         if localpath is None:
             localpath = os.path.basename(remotepath)
         fp = open(localpath, 'wb')
-        self.retrbinary('RETR ' + remotepath, fp.write, bufsize)
-        self.set_debuglevel(0)
+        self.ftp.retrbinary('RETR ' + remotepath, fp.write, bufsize)
         fp.close()
         print(f'文件 {remotepath} 下载成功！')
- 
+        self.ftp.delete(remotepath)
+
     def uploadfile(self, localpath, remotepath=None):
         """ 上传文件 """
         bufsize = 1024
         if remotepath is None:
             remotepath = os.path.basename(localpath)
         fp = open(localpath, 'rb')
-        self.storbinary('STOR ' + remotepath, fp, bufsize)
-        self.set_debuglevel(0)
+        #目录不存在时先新建
+        dir = os.path.dirname(remotepath)
+        self.mkdir(dir)
+        self.ftp.storbinary('STOR ' + remotepath, fp, bufsize)
         fp.close()
         print(f'文件 {localpath} 上传成功！')
- 
-    def uploadfolder(self, localpath):
-        """ 上传文件夹 """
-        bufsize = 1024
-        _fold = os.path.basename(localpath)
-        try:
-            self.mkd(_fold)
-        except Exception as exc:
-            if 'exists' in str(exc):
-                cz = input(f'目录 {_fold} 已经存在，是否覆盖其所有文件(Y/N)：')
-                if cz != 'Y':
-                    return
-        self.cwd(_fold)
-        next_fold = []
-        for i in os.listdir(localpath):
-            _f = os.path.join(localpath,i)
-            if os.path.isfile(_f):
-                fp = open(_f, 'rb')
-                self.storbinary('STOR ' + i, fp, bufsize)
-                self.set_debuglevel(0)
-                fp.close()
-            elif os.path.isdir(_f):
-                next_fold.append((_fold,_f))
- 
-        for j,i in next_fold:
-            v = self.pwd().split('/')
-            if j != v[-1]:
-                self.cwd('../')
-            self.uploadfolder(i)
- 
-        print(f'文件夹 {localpath} 上传成功！')
- 
- 
-if __name__ == '__main__':
-    host = '192.168.123.171'  # IP
-    port = 2121             # 端口
-    user = ''           # 用户名
-    password = ''     # 密码
-    ftp = FTPClient()
-    ftp.ftplogin(host, port, user, password)  # 登录
-    # ftp.downloadfile('c.txt')  # 下载文件
-    #ftp.uploadfolder(r'D:\ass')  # 上传文件夹 ass
 
 
-
-
-
-
-
+    def download(self,src,dst):
+        list = self.get_file_list(src)
+        logging.info(list)
+        for i in list:
+            dst_file = os.path.join(dst,i.replace("/","\\"))
+            if not os.path.isdir(os.path.dirname(dst_file)):
+                cmd = "mkdir \"%s\""%os.path.dirname(dst_file)
+                logging.info(cmd)
+                os.system(cmd)
+            if not os.path.exists(dst_file) or os.path.getsize(dst_file) < 1024:
+                self.downloadfile(i,dst_file)
+                
 
 
 
