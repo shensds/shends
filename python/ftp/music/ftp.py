@@ -149,7 +149,7 @@ def to_windows():
             ftp.downloadfile(i,dst_file)
 
 
-dst = "d:\\music\\"
+dst = "e:\\music\\"
 def to_phone():
     ftp = FtpClicent()
     list = []
@@ -172,8 +172,8 @@ def test():
     ftp.mkdir("music/华语/1/2/3")
     #ftp.uploadfile(r"e:\music\music\华语\1983组合 - 等爱走了以后.mp3","music/华语/1983组合 - 等爱走了以后.mp3")
 #ftp.downloadfile("1.file","d:\\1.file")
-to_phone()
-#to_windows()
+#to_phone()
+to_windows()
 
 
 
