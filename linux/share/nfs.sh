@@ -1,15 +1,15 @@
 yum -y install nfs-utils rpcbind
-vim /etc/exports 
-/data/nfs 172.16.1.0/24(rw,sync)
-exportfs -r  
-
-# 先启动rpc 
-/etc/init.d/rpcbind start           
+vim /etc/exports
+/data/nfs 172.16.1.0/24(rw,sync,no_root_squash)
+exportfs -r
+echo /home *(rw,sync,no_root_squash) > /etc/exports
+# 先启动rpc  
+/etc/init.d/rpcbind start 
 centos 8
 /usr/bin/rpcbind start
 
 #启动NFS
-/etc/init.d/nfs start                  
+/etc/init.d/nfs start
 systemctl start nfs-server.service
 
 systemctl enable nfs-server.service
@@ -21,7 +21,7 @@ chkconfig nfs on
 chkconfig nfs-server on
 
 #加入到开机自启中 
-tail -2 /etc/rc.local           
+tail -2 /etc/rc.local
 /etc/init.d/rpcbind start 
 /etc/init.d/nfs  start
 
