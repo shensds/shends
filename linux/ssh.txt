@@ -8,3 +8,41 @@ Host 别名
 	Hostname IP
 	User     root
 	Port     22
+	
+	
+	
+	
+ubuntu
+二、安装SSH服务
+
+#客户端
+sudo apt-get install openssh-client
+#服务器
+sudo apt-get install openssh-server
+或者
+
+apt-get install ssh
+三、启动SSH服务 
+
+sudo /etc/init.d/ssh start
+四、修改SSH配置文件 
+
+可以通过SSH配置文件更改包括端口、是否允许root登录等设置，配置文件位置：
+
+/etc/ssh/sshd_config
+ 默认是不允许root远程登录的，可以再配置文件开启。
+
+sudo vim /etc/ssh/sshd_config
+ 找到PermitRootLogin without-password 修改为PermitRootLogin yes
+
+ 五、重启SSH服务
+
+ service ssh restart
+
+ 即可通过winscp 、putty使用ROOT权限远程登录。
+
+ 启用root用户：sudo passwd root      //修改密码后就启用了。
+
+ 客户端如果是ubuntu的话，则已经安装好ssh client,可以用下面的命令连接远程服务器。
+
+$ ssh xxx.xxx.xxx.xxx
