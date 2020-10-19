@@ -1,0 +1,9 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+executor = ThreadPoolExecutor(max_workers = 50)
+
+def func():
+  pass
+while 1:
+  task = executor.submit(func, self, logs_path, job)
+ executor.shutdown(wait=True) 
