@@ -138,7 +138,7 @@ def to_windows():
     ftp = FtpClicent()
     list = ftp.get_file_list("music")
     print(list)
-    dst = "e:\\music"
+    dst = "d:\\music"
     for i in list:
         dst_file = os.path.join(dst,i.replace("/","\\"))
         if not os.path.isdir(os.path.dirname(dst_file)):
