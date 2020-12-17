@@ -1,0 +1,201 @@
+cmake_minimum_required(VERSION 3.14)
+project(res_comm)
+
+add_custom_target(res_comm_cpres_run
+                  COMMAND BUILD_LOG_DIR=${BUILD_LOG_DIR} bash ./makeres.sh comm cpres
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_cpres_input
+                  COMMAND python makeres.py input comm cpres
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_cpres_output
+                  COMMAND python makeres.py output comm cpres
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_mml_run
+                  COMMAND BUILD_LOG_DIR=${BUILD_LOG_DIR} bash ./makeres.sh comm mml
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+                  DEPENDS res_comm_cpres_run
+)
+
+add_custom_target(res_comm_mml_input
+                  COMMAND python makeres.py input comm mml
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_mml_output
+                  COMMAND python makeres.py output comm mml
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_flt_run
+                  COMMAND BUILD_LOG_DIR=${BUILD_LOG_DIR} bash ./makeres.sh comm flt
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+                  DEPENDS res_comm_cpres_run
+)
+
+add_custom_target(res_comm_flt_input
+                  COMMAND python makeres.py input comm flt
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_flt_output
+                  COMMAND python makeres.py output comm flt
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_ml_run
+                  COMMAND BUILD_LOG_DIR=${BUILD_LOG_DIR} bash ./makeres.sh comm ml
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+                  DEPENDS res_comm_mml_run res_comm_flt_run
+)
+
+add_custom_target(res_comm_ml_input
+                  COMMAND python makeres.py input comm ml
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_ml_output
+                  COMMAND python makeres.py output comm ml
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_lic_run
+                  COMMAND BUILD_LOG_DIR=${BUILD_LOG_DIR} bash ./makeres.sh comm lic
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+                  DEPENDS res_comm_cpres_run
+)
+
+add_custom_target(res_comm_lic_input
+                  COMMAND python makeres.py input comm lic
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_lic_output
+                  COMMAND python makeres.py output comm lic
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_clsdef_run
+                  COMMAND BUILD_LOG_DIR=${BUILD_LOG_DIR} bash ./makeres.sh comm clsdef ${PTRSIZE}
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+                  DEPENDS res_comm_mml_run
+)
+
+add_custom_target(res_comm_clsdef_input
+                  COMMAND python makeres.py input comm clsdef
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_clsdef_output
+                  COMMAND python makeres.py output comm clsdef ${PTRSIZE}
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_minicfg_run
+                  COMMAND BUILD_LOG_DIR=${BUILD_LOG_DIR} bash ./makeres.sh comm minicfg
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+                  DEPENDS res_comm_clsdef_run
+)
+
+add_custom_target(res_comm_minicfg_input
+                  COMMAND python makeres.py input comm minicfg
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_minicfg_output
+                  COMMAND python makeres.py output comm minicfg
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_tst_run
+                  COMMAND BUILD_LOG_DIR=${BUILD_LOG_DIR} bash ./makeres.sh comm tst
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+                  DEPENDS res_comm_cpres_run
+)
+
+add_custom_target(res_comm_tst_input
+                  COMMAND python makeres.py input comm tst
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_tst_output
+                  COMMAND python makeres.py output comm tst
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_evt_run
+                  COMMAND BUILD_LOG_DIR=${BUILD_LOG_DIR} bash ./makeres.sh comm evt
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+                  DEPENDS res_comm_cpres_run
+)
+
+add_custom_target(res_comm_evt_input
+                  COMMAND python makeres.py input comm evt
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_evt_output
+                  COMMAND python makeres.py output comm evt
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_pfm_run
+                  COMMAND BUILD_LOG_DIR=${BUILD_LOG_DIR} bash ./makeres.sh comm pfm
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+                  DEPENDS res_comm_cpres_run
+)
+
+add_custom_target(res_comm_pfm_input
+                  COMMAND python makeres.py input comm pfm
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+add_custom_target(res_comm_pfm_output
+                  COMMAND python makeres.py output comm pfm
+                  WORKING_DIRECTORY ${MAKERES_SCRIPT_DIR}
+)
+
+if(RES_MODULE STREQUAL "all")
+add_custom_target(res_comm_all_run)
+add_dependencies(res_comm_all_run 
+                    res_comm_cpres_run
+                    res_comm_mml_run
+                    res_comm_flt_run
+                    res_comm_ml_run
+                    res_comm_lic_run
+                    res_comm_clsdef_run
+                    res_comm_minicfg_run
+                    res_comm_tst_run
+                    res_comm_evt_run
+                    res_comm_pfm_run)
+
+add_custom_target(res_comm_all_input)
+add_dependencies(res_comm_mml_input      res_comm_cpres_input)
+add_dependencies(res_comm_flt_input      res_comm_mml_input)
+add_dependencies(res_comm_ml_input       res_comm_flt_input)
+add_dependencies(res_comm_lic_input      res_comm_ml_input)
+add_dependencies(res_comm_clsdef_input   res_comm_lic_input)
+add_dependencies(res_comm_minicfg_input  res_comm_clsdef_input)
+add_dependencies(res_comm_tst_input      res_comm_minicfg_input)
+add_dependencies(res_comm_evt_input      res_comm_tst_input)
+add_dependencies(res_comm_pfm_input      res_comm_evt_input)
+add_dependencies(res_comm_all_input      res_comm_pfm_input)
+
+add_custom_target(res_comm_all_output)
+add_dependencies(res_comm_mml_output      res_comm_cpres_output)
+add_dependencies(res_comm_flt_output      res_comm_mml_output)
+add_dependencies(res_comm_ml_output       res_comm_flt_output)
+add_dependencies(res_comm_lic_output      res_comm_ml_output)
+add_dependencies(res_comm_clsdef_output   res_comm_lic_output)
+add_dependencies(res_comm_minicfg_output  res_comm_clsdef_output)
+add_dependencies(res_comm_tst_output      res_comm_minicfg_output)
+add_dependencies(res_comm_evt_output      res_comm_tst_output)
+add_dependencies(res_comm_pfm_output      res_comm_evt_output)
+add_dependencies(res_comm_all_output      res_comm_pfm_output)
+endif()
+
