@@ -1,0 +1,329 @@
+cmake_minimum_required(VERSION 3.14)
+project(CMAKE_MAKERES LANGUAGES NONE)
+
+if(HERT_BUILD_MODE)
+    message(STATUS "HERT_BUILD_MODE is ${HERT_BUILD_MODE}")
+endif()
+
+if (EXISTS ${CMAKE_CURRENT_LIST_DIR}/cmake/modules/hert_res.cmake)
+    include(cmake/modules/hert_res.cmake)
+endif()
+
+
+
+include(ExternalProject)
+
+set(HERT_ROOT_PATH ${CMAKE_CURRENT_LIST_DIR}/../../../../..)
+set(MAKERES_SCRIPT_DIR ${HERT_ROOT_PATH}/project/makeres/script)
+set(MAKERES_WORKSPACE_DIR ${HERT_ROOT_PATH}/project/makeres/workspace)
+
+
+if (NOT RES_MODULE)
+set(RES_MODULE "all")
+endif()
+
+if (NOT ACTION_TYPE)
+set(ACTION_TYPE "run")
+endif()
+
+if (NOT BUILD_LOG_DIR)
+set(BUILD_LOG_DIR ${MAKERES_WORKSPACE_DIR})
+endif()
+
+add_custom_target(hert_makeres_all)
+add_custom_target(hert_makeres_doc)
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/comm)
+ExternalProject_Add(hert_makeres_comm
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/comm
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR> -DPTRSIZE=${PTRSIZE}
+                    BUILD_COMMAND $(MAKE) res_comm_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_all hert_makeres_comm)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/rat_l)
+ExternalProject_Add(hert_makeres_rat_l
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/rat_l
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_rat_l_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_all hert_makeres_rat_l)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/rat_u)
+ExternalProject_Add(hert_makeres_rat_u
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/rat_u
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_rat_u_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_all hert_makeres_rat_u)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/rat_g)
+ExternalProject_Add(hert_makeres_rat_g
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/rat_g
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_rat_g_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_all hert_makeres_rat_g)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/sran)
+ExternalProject_Add(hert_makeres_sran
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/sran
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_sran_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_doc hert_makeres_sran)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/sran_5900)
+ExternalProject_Add(hert_makeres_sran_5900
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/sran_5900
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_sran_5900_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_doc hert_makeres_sran_5900)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/sran_russia)
+ExternalProject_Add(hert_makeres_sran_russia
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/sran_russia
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_sran_russia_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_doc hert_makeres_sran_russia)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/use)
+ExternalProject_Add(hert_makeres_use
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/use
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_use_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_doc hert_makeres_use)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/usu)
+ExternalProject_Add(hert_makeres_usu
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/usu
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR> -DPTRSIZE=${PTRSIZE}
+                    BUILD_COMMAND $(MAKE) res_usu_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_all hert_makeres_usu)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/usu3910)
+ExternalProject_Add(hert_makeres_usu3910
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/usu3910
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR> -DPTRSIZE=${PTRSIZE}
+                    BUILD_COMMAND $(MAKE) res_usu3910_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_all hert_makeres_usu3910)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/comm_urussia)
+ExternalProject_Add(hert_makeres_comm_urussia
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/comm_urussia
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_comm_urussia_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_doc hert_makeres_comm_urussia)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/comm_u)
+ExternalProject_Add(hert_makeres_comm_u
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/comm_u
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_comm_u_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_all hert_makeres_comm_u)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/comm_russia)
+ExternalProject_Add(hert_makeres_comm_russia
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/comm_russia
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_comm_russia_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_doc hert_makeres_comm_russia)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/comm_rat_urussia)
+ExternalProject_Add(hert_makeres_comm_rat_urussia
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/comm_rat_urussia
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_comm_rat_urussia_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_doc hert_makeres_comm_rat_urussia)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/comm_rat_u)
+ExternalProject_Add(hert_makeres_comm_rat_u
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/comm_rat_u
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_comm_rat_u_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_all hert_makeres_comm_rat_u)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/comm_rat_lrussia)
+ExternalProject_Add(hert_makeres_comm_rat_lrussia
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/comm_rat_lrussia
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_comm_rat_lrussia_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_doc hert_makeres_comm_rat_lrussia)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/comm_rat_l)
+ExternalProject_Add(hert_makeres_comm_rat_l
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/comm_rat_l
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_comm_rat_l_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_all hert_makeres_comm_rat_l)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/comm_rat_g)
+ExternalProject_Add(hert_makeres_comm_rat_g
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/comm_rat_g
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_comm_rat_g_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_all hert_makeres_comm_rat_g)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/comm_nr)
+ExternalProject_Add(hert_makeres_comm_nr
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/comm_nr
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_comm_nr_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_all hert_makeres_comm_nr)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/comm_lrussia)
+ExternalProject_Add(hert_makeres_comm_lrussia
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/comm_lrussia
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_comm_lrussia_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_doc hert_makeres_comm_lrussia)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/comm_l)
+ExternalProject_Add(hert_makeres_comm_l
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/comm_l
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_comm_l_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_all hert_makeres_comm_l)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/comm_g)
+ExternalProject_Add(hert_makeres_comm_g
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/comm_g
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_comm_g_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_all hert_makeres_comm_g)
+endif()
+
+if (EXISTS ${MAKERES_WORKSPACE_DIR}/comm_5900)
+ExternalProject_Add(hert_makeres_comm_5900
+                    SOURCE_DIR ${MAKERES_WORKSPACE_DIR}/comm_5900
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DRES_MODULE=${RES_MODULE} -DMAKERES_SCRIPT_DIR=${MAKERES_SCRIPT_DIR} -DBUILD_LOG_DIR=${BUILD_LOG_DIR} <SOURCE_DIR>
+                    BUILD_COMMAND $(MAKE) res_comm_5900_${RES_MODULE}_${ACTION_TYPE} 
+                    INSTALL_COMMAND ""
+                    BUILD_ALWAYS TRUE
+                    EXCLUDE_FROM_ALL TRUE
+)
+add_dependencies(hert_makeres_all hert_makeres_comm_5900)
+endif()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
