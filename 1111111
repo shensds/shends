@@ -1,0 +1,16 @@
+#时间字符串转时间数组
+a1 = "2019-5-10 23:40:00"
+timeArray = time.strptime(a1, "%Y-%m-%d %H:%M:%S")
+
+#时间数组转时间戳
+timeStamp = int(time.mktime(timeArray))
+
+#格式化时间
+time.strftime("%Y/%m/%d %H:%M:%S", timeArray)
+
+
+#转换成localtime
+time_local = time.localtime(time.time())
+
+curr_time= datetime.datetime.fromtimestamp(int(text))
+curr_time = datetime.datetime(int(_date[0]), int(_date[1]), int(_date[2]), int(_time[0]), int(_time[1]))
