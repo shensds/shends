@@ -64,19 +64,6 @@ def make_tree(node_list, trees):
     make_tree(node_list, new_trees)
 
 
-node_list = [1, 2, 3, 4, 5]
-
-def add(tree, num):
-    while 1:
-        if tree.right == None:
-            tree.right = BTree(num)
-            break
-        tree = tree.right
-
-    if tree.right.data < tree.data:
-        tmp = tree.data
-        tree.data = tree.right.data
-        tree.right.data = tmp
 
 
 def find_last_none(trees):
@@ -96,7 +83,7 @@ def find_last_none(trees):
     return find_last_none(new_trees)
 
 
-def add2(tree, num):
+def add(tree, num):
     last_tree = find_last_none([tree])
     if not last_tree.left:
         if num >= last_tree.data:
@@ -144,7 +131,7 @@ def delete(tree, data):
     last_tree.father.right = None
     return tree
 
-
+node_list = [1, 2, 3, 4, 5]
 TREE = BTree(node_list[0])
 make_tree(node_list[1:], [TREE])
 # print_tree([TREE])
@@ -162,8 +149,7 @@ print_tree([tree])
 add(tree, 2)
 print_tree([tree])
 
-
-
+'''
 1
 2 3
 4 5 6
@@ -179,3 +165,4 @@ print_tree([tree])
 1
 2 6
 5 4
+'''
