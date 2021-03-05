@@ -7,7 +7,6 @@ class BTree(object):
         self.data = data    # 数据域
         self.left = left    # 左子树
         self.right = right  # 右子树
-        self.next = [self.left, self.right]
 
     # 前序遍历
     def preorder(self):
@@ -70,34 +69,28 @@ def find_last_none(trees):
     new_trees = []
     for tree in trees:
         if tree.left:
-            tree.left.father = tree
             new_trees.append(tree.left)
         else:
-            return tree
-            
+            return tree, "left"
         if tree.right:
-            tree.right.father = tree
             new_trees.append(tree.right)
         else:
-            return tree
+            return tree, "right"
     return find_last_none(new_trees)
 
 
 def add(tree, num):
-    last_tree = find_last_none([tree])
-    if not last_tree.left:
-        if num >= last_tree.data:
-            last_tree.left = BTree(num)
-        else:
-            last_tree.left = BTree(last_tree.data)
-            last_tree.data = num
-        return
-    if not last_tree.right:
-        if num >= last_tree.data:
-            last_tree.right = BTree(num)
-        else:
-            last_tree.right = BTree(last_tree.data)
-            last_tree.data = num
+    father, flag = find_last_none([tree])
+    if num >= father.data:
+        x = getattr(father, flag)
+        print(x)
+        exit()
+        # = BTree(num)
+    else:
+        #getattr(father, flag) = BTree(father.data)
+        father.data = num
+    return
+
 
 def find_last(trees):
     new_trees = []
