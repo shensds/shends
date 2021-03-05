@@ -7,6 +7,7 @@ class BTree(object):
         self.data = data    # 数据域
         self.left = left    # 左子树
         self.right = right  # 右子树
+        self.next = [self.left, self.right]
 
     # 前序遍历
     def preorder(self):
@@ -71,26 +72,29 @@ def find_last_none(trees):
         if tree.left:
             new_trees.append(tree.left)
         else:
-            return tree, "left"
+            return tree
         if tree.right:
             new_trees.append(tree.right)
         else:
-            return tree, "right"
+            return tree
     return find_last_none(new_trees)
 
 
 def add(tree, num):
-    father, flag = find_last_none([tree])
-    if num >= father.data:
-        x = getattr(father, flag)
-        print(x)
-        exit()
-        # = BTree(num)
-    else:
-        #getattr(father, flag) = BTree(father.data)
-        father.data = num
-    return
-
+    last_tree = find_last_none([tree])
+    if not last_tree.left:
+        if num >= last_tree.data:
+            last_tree.left = BTree(num)
+        else:
+            last_tree.left = BTree(last_tree.data)
+            last_tree.data = num
+        return
+    if not last_tree.right:
+        if num >= last_tree.data:
+            last_tree.right = BTree(num)
+        else:
+            last_tree.right = BTree(last_tree.data)
+            last_tree.data = num
 
 def find_last(trees):
     new_trees = []
@@ -113,6 +117,7 @@ def delete(tree, data):
     data_tree = tree.find_by_data(data)
     last_tree = find_last([tree])
     data_tree.data = last_tree.data
+    
     if data_tree.left and data_tree.data > data_tree.left.data:
         tmp = data_tree.left.data
         data_tree.left.data = data_tree.data
@@ -121,7 +126,10 @@ def delete(tree, data):
         tmp = data_tree.right.data
         data_tree.right.data = data_tree.data
         data_tree.data = tmp
-    last_tree.father.right = None
+    if last_tree.father.right:
+        last_tree.father.right = None
+    else:
+        last_tree.father.left = None
     return tree
 
 node_list = [1, 2, 3, 4, 5]
