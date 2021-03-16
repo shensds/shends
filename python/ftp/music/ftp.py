@@ -87,7 +87,9 @@ class FtpClicent():
         for arg in args:
             cmd = cmd + (' ' + arg)
         files = []
+        print(cmd)
         self.ftp.retrlines(cmd, files.append)
+        print(files)
         return files
         
     def get_dir_file(self,path,list):
@@ -135,10 +137,10 @@ class FtpClicent():
 
 
 def to_windows():
+    dst = r"E:\bakup\music"
     ftp = FtpClicent()
     list = ftp.get_file_list("music")
     print(list)
-    dst = "d:\\music"
     for i in list:
         dst_file = os.path.join(dst,i.replace("/","\\"))
         if not os.path.isdir(os.path.dirname(dst_file)):
@@ -146,10 +148,8 @@ def to_windows():
             print(cmd)
             os.system(cmd)
         if not os.path.exists(dst_file) or os.path.getsize(dst_file) < 3172:
-            ftp.downloadfile(i,dst_file)
+            ftp.downloadfile(i, dst_file)
 
-
-dst = "e:\\music\\"
 def to_phone():
     ftp = FtpClicent()
     list = []
