@@ -1,1 +1,0 @@
-createobject("wscript.shell").run "D:\py\ftp\ftp_server.py",1

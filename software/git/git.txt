@@ -21,3 +21,7 @@ git merge -s recursive -X ignore-space-at-eol origin/master
 git config --global core.safecrlf true // 禁止提交混合\n和\r\n的文件
 git config --global core.safecrlf false // 允许提交
 git config --global core.safecrlf warn // 提交时产生警告
+
+
+#获取分支节点
+git ls-remote http://pihertbbuint:73imoA2uVSZzsdpr9bqL@code-sh.rnd.huawei.com/ROSA_RB/RB_V5R10C00.git refs/heads/master
