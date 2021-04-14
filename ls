@@ -28,3 +28,12 @@ a = Solution()
 print(a.canPartitionKSubsets([4,3,2,3,5,2,1], 4))
 
 
+https://leetcode-cn.com/problems/minimum-size-subarray-sum/
+https://leetcode-cn.com/problems/longest-substring-without-repeating-characters
+https://leetcode-cn.com/problems/count-number-of-nice-subarrays/
+https://leetcode-cn.com/problems/decode-ways/
+https://leetcode-cn.com/problems/fruit-into-baskets/
+https://leetcode-cn.com/problems/find-all-anagrams-in-a-string/solution/python-hua-dong-chuang-kou-438-zhao-dao-zi-fu-chua/
+https://leetcode-cn.com/problems/binary-subarrays-with-sum/
+https://leetcode-cn.com/problems/reconstruct-itinerary/
+
